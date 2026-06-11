@@ -7,6 +7,10 @@
 ![Swift](https://img.shields.io/badge/Swift-5-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+<p align="center">
+  <img src="docs/screenshot.jpg" alt="VoxKit main window" width="720">
+</p>
+
 VoxKit lives in your menu bar and stays out of the way. It is a small, native SwiftUI
 app (~5 MB, no Electron, no background daemons) built by
 [Zikai Xiong](https://zikaixiong.github.io) with Claude (Fable 5).
