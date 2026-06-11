@@ -4,3 +4,14 @@ dist/
 .DS_Store
 .swiftpm/
 xcuserdata/
+
+# Defensive: personal data lives in ~/Library/Application Support/VoxNote/
+# and never belongs in this repo, but guard against accidental copies.
+.claude/
+*.wav
+*.m4a
+*.mp3
+*.caf
+sessions.json
+lexicon.json
+speech.json

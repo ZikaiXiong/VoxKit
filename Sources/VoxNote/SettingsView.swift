@@ -6,6 +6,7 @@ struct SettingsView: View {
     @EnvironmentObject var state: AppState
 
     @AppStorage("autoApplyRules") private var autoApplyRules = true
+    @AppStorage("quickReview") private var quickReview = true
     @AppStorage("autoPaste") private var autoPaste = false
     @AppStorage("apple.lang") private var appleLang = "zh"
     @AppStorage("apple.onDevice") private var appleOnDevice = true
@@ -64,6 +65,9 @@ struct SettingsView: View {
                     NSWorkspace.shared.activateFileViewerSelecting([state.store.rootDir])
                 }
             }
+            Text(L.t("隐私：录音、转写、词库只保存在本机此目录；API Key 在 macOS 钥匙串；无任何遥测。分发 App 或源码不会携带这些数据。",
+                     "Privacy: recordings, transcripts, and the lexicon live only in this local folder; API keys stay in the macOS Keychain; no telemetry. Distributing the app or source carries none of this data."))
+                .font(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -86,6 +90,10 @@ struct SettingsView: View {
             }
             .onChange(of: hotkeyID) { _ in HotKeyManager.shared.applyFromDefaults() }
 
+            Toggle(L.t("听写完成后弹出修正窗（结果仍会先复制）", "Show a review panel after dictation (text is still copied first)"), isOn: $quickReview)
+            Text(L.t("修正窗不抢焦点：不需要改就直接去粘贴，它几秒后自动消失；改了会重新复制并让词典学习。",
+                     "The panel never steals focus — paste right away and it fades, or edit to re-copy and teach the lexicon."))
+                .font(.caption).foregroundStyle(.secondary)
             Toggle(L.t("新转写自动应用已学会的修正规则", "Auto-apply learned correction rules"), isOn: $autoApplyRules)
             Toggle(L.t("快速听写复制后自动粘贴到当前输入框", "Auto-paste after quick dictation"), isOn: $autoPaste)
                 .onChange(of: autoPaste) { on in
