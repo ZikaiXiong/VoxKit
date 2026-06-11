@@ -99,7 +99,7 @@ private struct HUDContent: View {
 
     private var titleLine: String {
         switch state.phase {
-        case .recording: return L.t("正在听写 · ", "Dictating · ") + state.provider.displayName
+        case .recording: return L.t("正在听写 · ", "Dictating · ") + state.activeProvider.displayName
         case .paused: return L.t("已暂停", "Paused")
         case .processing: return state.processingDetail ?? L.t("正在转写…", "Transcribing…")
         case .done(let msg, _): return msg
