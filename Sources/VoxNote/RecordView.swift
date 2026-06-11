@@ -109,9 +109,11 @@ private struct RecordContent: View {
                 inFlightProgress
             }
         case .recording:
-            Text(state.activeMode == .quick && !state.liveText.isEmpty
-                 ? state.liveText
-                 : L.t("正在录音…", "Recording…"))
+            Text(!recorder.isReceivingAudio
+                 ? L.t("正在启动麦克风…", "Starting the microphone…")
+                 : (state.activeMode == .quick && !state.liveText.isEmpty
+                    ? state.liveText
+                    : L.t("正在录音…", "Recording…")))
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
                 .frame(maxWidth: 520)

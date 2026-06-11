@@ -111,10 +111,12 @@ private struct HUDContent: View {
     private var subtitle: some View {
         switch state.phase {
         case .recording, .paused:
-            Text(state.liveText.isEmpty
-                 ? L.t("请讲话…（再按 \(HotkeyPreset.current().label) 完成并复制）",
-                       "Speak… (press \(HotkeyPreset.current().label) again to finish & copy)")
-                 : state.liveText)
+            Text(!recorder.isReceivingAudio && state.phase == .recording
+                 ? L.t("正在启动麦克风…", "Starting the microphone…")
+                 : (state.liveText.isEmpty
+                    ? L.t("请讲话…（再按 \(HotkeyPreset.current().label) 完成并复制）",
+                          "Speak… (press \(HotkeyPreset.current().label) again to finish & copy)")
+                    : state.liveText))
                 .font(.callout)
                 .foregroundStyle(state.liveText.isEmpty ? .secondary : .primary)
                 .lineLimit(2)

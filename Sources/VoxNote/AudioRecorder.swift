@@ -2,23 +2,36 @@ import Foundation
 import AVFoundation
 import AudioToolbox
 
-/// Microphone recording: always written as 16kHz / mono / 16-bit WAV (smallest format cloud models accept).
-/// @Published properties update on the main thread; audio callbacks run on the capture thread.
+/// Microphone recorder: writes a standard 16kHz / mono / 16-bit WAV (the most
+/// size-efficient format cloud models accept).
+///
+/// Robustness: AVAudioEngine occasionally "starts" without ever delivering input
+/// buffers (stale hardware format, device handoff, another app holding the mic).
+/// The tap therefore uses the bus's live format (format: nil), the converter is
+/// created lazily from the first real buffer, and a watchdog rebuilds the engine
+/// automatically if no audio arrives shortly after start.
 final class AudioRecorder: ObservableObject {
     @Published private(set) var level: Float = 0
     @Published private(set) var elapsed: TimeInterval = 0
+    /// True once the first buffer actually arrived — drives the "starting mic…" UI state
+    @Published private(set) var isReceivingAudio = false
     /// Highest level seen in this recording — near-zero means the mic captured no sound
     private(set) var peakLevel: Float = 0
 
     private var engine: AVAudioEngine?
     private var file: AVAudioFile?
     private var converter: AVAudioConverter?
+    private var lastInputFormat: AVAudioFormat?
     private(set) var fileURL: URL?
     private var writtenFrames: Int64 = 0
     private var lastUIUpdate: CFAbsoluteTime = 0
+    private var gotAudio = false
+    private var watchdog: DispatchWorkItem?
 
-    /// Raw-format audio buffer callback (fed to Apple live recognition)
+    /// Raw-format buffer callback (feeds Apple live recognition)
     var bufferHandler: ((AVAudioPCMBuffer) -> Void)?
+    /// Called on the main queue when the engine failed to deliver audio after retries
+    var onStartupFailure: (() -> Void)?
 
     private let outFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 16000, channels: 1, interleaved: true)!
 
@@ -33,10 +46,15 @@ final class AudioRecorder: ObservableObject {
     }
 
     func start(to url: URL, device: AudioDeviceID? = nil) throws {
+        try startEngine(to: url, device: device)
+        armWatchdog(device: device, retriesLeft: 2)
+    }
+
+    private func startEngine(to url: URL, device: AudioDeviceID?) throws {
         teardownEngine()
         let engine = AVAudioEngine()
         let input = engine.inputNode
-        // Select the input device (nil = follow system default)
+        // Pin the input source (nil = follow the system default)
         if var deviceID = device, let audioUnit = input.audioUnit {
             AudioUnitSetProperty(audioUnit,
                                  kAudioOutputUnitProperty_CurrentDevice,
@@ -56,25 +74,59 @@ final class AudioRecorder: ObservableObject {
             AVLinearPCMIsBigEndianKey: false,
         ]
         file = try AVAudioFile(forWriting: url, settings: settings, commonFormat: .pcmFormatInt16, interleaved: true)
-        converter = AVAudioConverter(from: inFormat, to: outFormat)
+        converter = nil          // built lazily from the first buffer's real format
+        lastInputFormat = nil
         fileURL = url
         writtenFrames = 0
+        gotAudio = false
 
-        input.installTap(onBus: 0, bufferSize: 4096, format: inFormat) { [weak self] buffer, _ in
+        // format: nil — follow whatever the hardware actually delivers. Passing a
+        // pre-read format can silently kill the tap when the device wakes up at a
+        // different sample rate.
+        input.installTap(onBus: 0, bufferSize: 4096, format: nil) { [weak self] buffer, _ in
             self?.handle(buffer)
         }
         engine.prepare()
         try engine.start()
         self.engine = engine
         peakLevel = 0
-        DispatchQueue.main.async { self.level = 0; self.elapsed = 0 }
+        DispatchQueue.main.async {
+            self.level = 0
+            self.elapsed = 0
+            self.isReceivingAudio = false
+        }
+    }
+
+    /// If no buffer arrives shortly after start, rebuild the engine (the silent-start
+    /// failure is transient — a fresh engine almost always recovers it).
+    private func armWatchdog(device: AudioDeviceID?, retriesLeft: Int) {
+        watchdog?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.engine != nil, !self.gotAudio else { return }
+            if retriesLeft > 0, let url = self.fileURL {
+                if (try? self.startEngine(to: url, device: device)) != nil {
+                    self.armWatchdog(device: device, retriesLeft: retriesLeft - 1)
+                } else {
+                    self.failStartup()
+                }
+            } else {
+                self.failStartup()
+            }
+        }
+        watchdog = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9, execute: work)
+    }
+
+    private func failStartup() {
+        teardownEngine()
+        DispatchQueue.main.async { self.onStartupFailure?() }
     }
 
     func pause() { engine?.pause() }
 
     func resume() { try? engine?.start() }
 
-    /// Stops recording, flushes to disk, and returns the audio file
+    /// Stops recording and finalizes the file; returns the audio URL
     @discardableResult
     func stop() -> URL? {
         let url = fileURL
@@ -82,7 +134,7 @@ final class AudioRecorder: ObservableObject {
         return url
     }
 
-    /// Cancels recording and deletes the file
+    /// Cancels and deletes the file
     func cancel() {
         let url = fileURL
         teardownEngine()
@@ -91,15 +143,22 @@ final class AudioRecorder: ObservableObject {
     }
 
     private func teardownEngine() {
+        watchdog?.cancel()
+        watchdog = nil
         engine?.inputNode.removeTap(onBus: 0)
         engine?.stop()
         engine = nil
-        file = nil       // releasing it finalizes the WAV header
+        file = nil       // releasing finalizes the WAV header
         converter = nil
+        lastInputFormat = nil
     }
 
-    // Capture thread
+    // Audio-capture thread
     private func handle(_ buffer: AVAudioPCMBuffer) {
+        if !gotAudio {
+            gotAudio = true
+            DispatchQueue.main.async { self.isReceivingAudio = true }
+        }
         bufferHandler?(buffer)
 
         var rms: Float = 0
@@ -114,6 +173,10 @@ final class AudioRecorder: ObservableObject {
             }
         }
 
+        if converter == nil || lastInputFormat != buffer.format {
+            converter = AVAudioConverter(from: buffer.format, to: outFormat)
+            lastInputFormat = buffer.format
+        }
         if let converter, let file {
             let ratio = outFormat.sampleRate / buffer.format.sampleRate
             let capacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 64

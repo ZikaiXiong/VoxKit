@@ -91,6 +91,21 @@ final class AppState: ObservableObject, @unchecked Sendable {
         live.onUpdate = { [weak self] text in
             Task { @MainActor in self?.liveText = text }
         }
+        // Engine delivered no audio even after automatic rebuilds — surface it clearly
+        recorder.onStartupFailure = { [weak self] in
+            Task { @MainActor in
+                guard let self, self.isRecording else { return }
+                self.recorder.cancel()
+                self.live.cancel()
+                self.usingLive = false
+                self.liveText = ""
+                self.phase = .idle
+                HUDController.shared.hide()
+                self.errorMessage = L.t(
+                    "麦克风没有送出音频（可能被其他应用占用或设备未就绪），自动重试后仍失败。请再按一次快捷键重试，或在「听写」页换一个麦克风。",
+                    "The microphone delivered no audio (it may be busy or not ready) even after automatic retries. Press the hotkey again, or pick another mic on the Dictate page.")
+            }
+        }
         restoreModel()
     }
 
@@ -220,11 +235,15 @@ final class AppState: ObservableObject, @unchecked Sendable {
         phase = .processing
         let duration = recorder.elapsed
 
+        let micWasLive = recorder.isReceivingAudio
         guard let url = recorder.stop(), duration > 0.4 else {
             live.cancel()
             usingLive = false
             try? FileManager.default.removeItem(at: recorder.fileURL ?? URL(fileURLWithPath: "/dev/null"))
-            finishQuickHUD(L.t("录音太短，已取消", "Too short, cancelled"), success: false)
+            finishQuickHUD(micWasLive
+                           ? L.t("录音太短，已取消", "Too short, cancelled")
+                           : L.t("麦克风尚未就绪，请再试一次", "Mic wasn't ready yet — try again"),
+                           success: false)
             return
         }
 
