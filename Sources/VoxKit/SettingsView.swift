@@ -171,7 +171,17 @@ struct SettingsView: View {
             Toggle(L.t("Auto-correct after every transcription", "转写完成后自动进行 AI 修正"), isOn: $aiAuto)
                 .help(L.t("Proofreads with your glossary; the original is always kept. Also available per-session in History",
                           "模型会带着你的词库校对，原文始终保留；也可在历史详情页手动触发"))
+            Text(lexiconSummary)
+                .font(.caption).foregroundStyle(.secondary)
         }
+    }
+
+    /// Makes the lexicon's participation visible: every correction request includes these
+    private var lexiconSummary: String {
+        let hotwords = state.store.lexicon.hotwords.count
+        let rules = state.store.lexicon.rules.filter(\.isActive).count
+        return L.t("Every request includes your lexicon: \(hotwords) hotword(s) · \(rules) active rule(s). Apple Intelligence is instant; Groq is the fastest cloud option.",
+                   "每次修正都会带上词库：热词 \(hotwords) · 生效规则 \(rules)。Apple 智能即时完成，Groq 是最快的云端选项。")
     }
 
     // MARK: API keys
