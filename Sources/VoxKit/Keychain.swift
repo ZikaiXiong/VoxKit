@@ -3,7 +3,7 @@ import Security
 
 /// Secure API key storage backed by the macOS Keychain
 enum Keychain {
-    private static let service = "com.zikai.voxnote"
+    private static let service = "com.zikai.voxkit"
 
     @discardableResult
     static func set(_ value: String, account: String) -> Bool {
@@ -19,6 +19,16 @@ enum Keychain {
     }
 
     static func get(account: String) -> String? {
+        if let value = read(service: service, account: account) { return value }
+        // Migrate forward from the pre-rename (VoxNote) service on first read
+        if let legacy = read(service: "com.zikai.voxnote", account: account) {
+            set(legacy, account: account)
+            return legacy
+        }
+        return nil
+    }
+
+    private static func read(service: String, account: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

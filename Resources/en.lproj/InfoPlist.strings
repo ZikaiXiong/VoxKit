@@ -1,3 +1,3 @@
-"CFBundleDisplayName" = "VoxNote";
-"NSMicrophoneUsageDescription" = "VoxNote needs the microphone to record and transcribe speech.";
-"NSSpeechRecognitionUsageDescription" = "VoxNote uses the system speech recognizer for on-device transcription.";
+"CFBundleDisplayName" = "VoxKit";
+"NSMicrophoneUsageDescription" = "VoxKit needs the microphone to record and transcribe speech.";
+"NSSpeechRecognitionUsageDescription" = "VoxKit uses the system speech recognizer for on-device transcription.";

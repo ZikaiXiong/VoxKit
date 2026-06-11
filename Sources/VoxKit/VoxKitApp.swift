@@ -2,9 +2,14 @@ import SwiftUI
 import AppKit
 
 @main
-struct VoxNoteApp: App {
+struct VoxKitApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var state = AppState.shared
+
+    init() {
+        // Must run before anything reads UserDefaults / the data directory
+        Migration.runIfNeeded()
+    }
 
     var body: some Scene {
         Window(L.appName, id: "main") {

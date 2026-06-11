@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import AVFoundation
 
-/// Data hub: session history + lexicon, persisted as JSON under ~/Library/Application Support/VoxNote
+/// Data hub: session history + lexicon, persisted as JSON under ~/Library/Application Support/VoxKit
 @MainActor
 final class Store: ObservableObject {
     @Published private(set) var sessions: [Session] = []
@@ -17,7 +17,7 @@ final class Store: ObservableObject {
     init() {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
-        rootDir = base.appendingPathComponent("VoxNote", isDirectory: true)
+        rootDir = base.appendingPathComponent("VoxKit", isDirectory: true)
         audioDir = rootDir.appendingPathComponent("Audio", isDirectory: true)
         speechDir = rootDir.appendingPathComponent("Speech", isDirectory: true)
         try? FileManager.default.createDirectory(at: audioDir, withIntermediateDirectories: true)

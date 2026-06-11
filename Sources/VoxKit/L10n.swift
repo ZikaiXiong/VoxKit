@@ -9,7 +9,7 @@ enum L {
     static var zh: Bool { lang == "zh" }
 
     /// App display name follows the interface language — never mixed.
-    static var appName: String { t("声记", "VoxNote") }
+    static var appName: String { t("声记", "VoxKit") }
 
     static func t(_ zhText: String, _ enText: String) -> String {
         zh ? zhText : enText

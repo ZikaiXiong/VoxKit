@@ -1,9 +1,9 @@
-# Distributing VoxNote
+# Distributing VoxKit
 
 ## Packaging
 
 ```bash
-./build.sh --zip        # produces dist/VoxNote-<version>.zip
+./build.sh --zip        # produces dist/VoxKit-<version>.zip
 ```
 
 Send the zip directly, or (recommended) upload it to a GitHub Release so people get a
@@ -14,14 +14,14 @@ stable download link: repo → Releases → *Draft a new release* → attach the
 The app is ad-hoc signed and not notarized, so Gatekeeper blocks the first launch.
 Recipients need to do this once:
 
-1. Unzip and drag `VoxNote.app` into **Applications**
+1. Unzip and drag `VoxKit.app` into **Applications**
 2. First open:
    - macOS 15 (Sequoia) and later: double-click (it gets blocked) → **System Settings →
      Privacy & Security** → scroll down → **"Open Anyway"** → enter password
    - macOS 14 and earlier: right-click the app → **Open** → **Open**
    - Terminal alternative that skips all of the above:
      ```bash
-     xattr -cr /Applications/VoxNote.app
+     xattr -cr /Applications/VoxKit.app
      ```
 3. Grant Microphone / Speech Recognition permissions on first use
 
@@ -40,20 +40,20 @@ a plain double-click, no warnings:
    ```
 3. **Notarize** (one-time credential setup with an app-specific password):
    ```bash
-   xcrun notarytool store-credentials voxnote --apple-id YOUR_APPLE_ID --team-id TEAMID
-   xcrun notarytool submit dist/VoxNote-1.1.0.zip --keychain-profile voxnote --wait
+   xcrun notarytool store-credentials voxkit --apple-id YOUR_APPLE_ID --team-id TEAMID
+   xcrun notarytool submit dist/VoxKit-0.6.0.zip --keychain-profile voxkit --wait
    ```
 4. Staple the ticket and re-zip:
    ```bash
-   xcrun stapler staple dist/VoxNote.app
-   ditto -c -k --keepParent dist/VoxNote.app dist/VoxNote-1.1.0-notarized.zip
+   xcrun stapler staple dist/VoxKit.app
+   ditto -c -k --keepParent dist/VoxKit.app dist/VoxKit-0.6.0-notarized.zip
    ```
 
 ## Notes
 
 - The build is **Apple Silicon (arm64)**. For Intel support, compile twice
   (`-target x86_64-apple-macos13.0` and arm64) and merge with
-  `lipo -create -output VoxNote <bin1> <bin2>` before packaging.
+  `lipo -create -output VoxKit <bin1> <bin2>` before packaging.
 - Requires macOS 13+; "AI Correction → Apple Intelligence" needs macOS 26+ with
   Apple Intelligence enabled — everything else is unaffected.
 - When releasing a new version, bump `CFBundleShortVersionString` and `CFBundleVersion`

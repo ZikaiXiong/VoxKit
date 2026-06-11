@@ -35,7 +35,7 @@ enum AppleSpeech {
     static func transcribeFile(url: URL, language: String, preferOnDevice: Bool) async throws -> String {
         guard await ensurePermission() else {
             throw VoxError.message(L.t("未获得语音识别权限：请在「系统设置 → 隐私与安全性 → 语音识别」中允许「声记」",
-                                       "Speech recognition denied: allow VoxNote under System Settings → Privacy & Security → Speech Recognition"))
+                                       "Speech recognition denied: allow VoxKit under System Settings → Privacy & Security → Speech Recognition"))
         }
         guard let recognizer = recognizer(for: language), recognizer.isAvailable else {
             throw VoxError.message(L.t("本机语音识别当前不可用", "On-device speech recognition is unavailable"))

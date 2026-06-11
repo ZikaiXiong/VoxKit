@@ -1,8 +1,9 @@
-# VoxNote 声记
+# VoxKit 声记
 
 A macOS menu-bar speech-to-text app: quick dictation + meeting transcription, multiple
 transcription models, AI proofreading, and a lexicon that learns your corrections.
-Interface in English and 中文. By [Zikai Xiong](https://zikaixiong.github.io).
+Interface in English and 中文. By [Zikai Xiong](https://zikaixiong.github.io),
+vibe-coded with Claude (Fable 5). Currently in 0.x — expect rough edges.
 
 ## Features
 
@@ -34,7 +35,7 @@ Interface in English and 中文. By [Zikai Xiong](https://zikaixiong.github.io).
      a rule: future transcripts get auto-corrected, with one-click suggestions (the
      original text is always preserved)
   2. *AI proofreading* — mis-recognitions vary wildly but the right words are stable, so
-     VoxNote can hand the transcript *plus your glossary* (hotwords + known corrections)
+     VoxKit can hand the transcript *plus your glossary* (hotwords + known corrections)
      to a language model for context-aware proofreading: Apple Intelligence on-device
      (macOS 26+, free) or any OpenAI-compatible chat model; run it automatically after
      every transcription or manually per session
@@ -43,15 +44,15 @@ Interface in English and 中文. By [Zikai Xiong](https://zikaixiong.github.io).
 
 ## Install (free path, no Apple Developer account)
 
-1. Download `VoxNote-x.y.z.zip` from [Releases](../../releases) and unzip it
-2. Drag `VoxNote.app` into your **Applications** folder
+1. Download `VoxKit-x.y.z.zip` from [Releases](../../releases) and unzip it
+2. Drag `VoxKit.app` into your **Applications** folder
 3. First launch — the app is not notarized, so macOS will block the first double-click:
    - **macOS 15 (Sequoia) and later**: double-click once (it gets blocked), then open
      **System Settings → Privacy & Security**, scroll down and click **"Open Anyway"**
    - **macOS 14 and earlier**: right-click the app → **Open** → **Open**
    - Or clear the quarantine flag in Terminal instead:
      ```bash
-     xattr -cr /Applications/VoxNote.app
+     xattr -cr /Applications/VoxKit.app
      ```
 4. Grant **Microphone** and **Speech Recognition** permissions when prompted
 5. Optional: add API keys under *Settings → API Keys* for cloud models; on-device
@@ -61,10 +62,10 @@ Interface in English and 中文. By [Zikai Xiong](https://zikaixiong.github.io).
 
 ```bash
 git clone <this repo>
-cd VoxNote
-./build.sh          # compile + package dist/VoxNote.app
+cd VoxKit
+./build.sh          # compile + package dist/VoxKit.app
 ./build.sh --zip    # also produce a distributable zip
-open dist/VoxNote.app
+open dist/VoxKit.app
 ```
 
 Only Xcode Command Line Tools are required (the build uses `swiftc` directly — no
@@ -89,7 +90,7 @@ far below the 25 MB caps.
 Everything stays on your Mac:
 
 - Recordings, transcripts, the lexicon, and generated speech live in
-  `~/Library/Application Support/VoxNote/` — `sessions.json` (history), `lexicon.json`
+  `~/Library/Application Support/VoxKit/` — `sessions.json` (history), `lexicon.json`
   (learned corrections & hotwords), `Audio/` (recordings), `Speech/` (generated TTS audio)
 - API keys are stored in the **macOS Keychain**, never in files
 - No telemetry, no analytics, no network calls other than the transcription/TTS

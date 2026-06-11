@@ -231,7 +231,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
         if reviewTarget != nil { finishReview(editedText: nil) }
         guard await AudioRecorder.ensurePermission() else {
             errorMessage = L.t("未获得麦克风权限：请在「系统设置 → 隐私与安全性 → 麦克风」中允许「声记」。",
-                               "Microphone access denied: allow VoxNote under System Settings → Privacy & Security → Microphone.")
+                               "Microphone access denied: allow VoxKit under System Settings → Privacy & Security → Microphone.")
             return
         }
         // Snapshot the mode's own provider/model — the picker may change mid-recording
