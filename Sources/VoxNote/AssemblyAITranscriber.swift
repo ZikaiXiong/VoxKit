@@ -27,10 +27,13 @@ enum AssemblyAITranscriber {
             throw VoxError.message(apiError(from: uploadData, fallback: L.t("AssemblyAI 上传失败", "AssemblyAI upload failed")))
         }
 
-        // 2. Create the transcription job
+        // 2. Create the transcription job.
+        // `speech_models` is a priority list: universal-3-pro covers EN/ES/PT/FR/DE/IT
+        // and automatically falls back to universal-2 for other languages (e.g. Chinese).
+        let speechModels = model == "universal-3-pro" ? ["universal-3-pro", "universal-2"] : [model]
         var body: [String: Any] = [
             "audio_url": audioURL,
-            "speech_model": model,
+            "speech_models": speechModels,
             "speaker_labels": diarize,
         ]
         if let language, !language.isEmpty {
