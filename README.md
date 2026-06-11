@@ -5,7 +5,7 @@
 
 ![Platform](https://img.shields.io/badge/macOS-13%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5-orange)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 <p align="center">
   <img src="docs/screenshot.jpg" alt="VoxKit main window" width="720">
@@ -81,9 +81,7 @@ open dist/VoxKit.app
 
 Only the Xcode Command Line Tools are required — the build script drives `swiftc`
 directly, so there is no Xcode project and no package resolution step.
-`./build.sh --zip` additionally produces a distributable zip. Signing and
-notarization, if you have a Developer ID, are covered in
-[DISTRIBUTION.md](DISTRIBUTION.md).
+`./build.sh --zip` additionally produces a distributable zip.
 
 ## Usage
 
@@ -131,13 +129,7 @@ any of the chat-capable services above.
 ## Requirements
 
 - macOS 13 Ventura or later, Apple Silicon
-  (Intel: build from source with the `lipo` notes in DISTRIBUTION.md)
-
-## Contributing
-
-Issues and pull requests are welcome. The codebase is a single Swift module under
-`Sources/VoxKit/` — `build.sh` is the whole build system.
 
 ## License
 
-[MIT](LICENSE) © 2026 Zikai Xiong
+[Apache-2.0](LICENSE) © 2026 Zikai Xiong
