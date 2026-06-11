@@ -16,23 +16,32 @@ final class ReviewPanelController {
 
     func show() {
         if panel == nil { build() }
+        guard let panel else { return }
+        // Restore the size the user last resized to
+        let defaults = UserDefaults.standard
+        let width = defaults.double(forKey: "review.width")
+        let height = defaults.double(forKey: "review.height")
+        panel.setContentSize(NSSize(width: width > 0 ? width : 560, height: height > 0 ? height : 250))
         // Rebuild the content so each dictation starts with fresh editor state
         let host = NSHostingView(rootView: ReviewView().environmentObject(AppState.shared))
-        host.frame = NSRect(x: 0, y: 0, width: 540, height: 240)
-        panel?.contentView = host
+        host.frame = panel.contentLayoutRect
+        host.autoresizingMask = [.width, .height]
+        panel.contentView = host
         position()
-        panel?.orderFrontRegardless()
+        panel.orderFrontRegardless()
     }
 
     func hide() {
         panel?.orderOut(nil)
+        panel?.contentView = NSView()   // release the hosting view and its timer
     }
 
     private func build() {
         let panel = KeyablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 540, height: 240),
-            styleMask: [.borderless, .nonactivatingPanel],
+            contentRect: NSRect(x: 0, y: 0, width: 560, height: 250),
+            styleMask: [.borderless, .nonactivatingPanel, .resizable],
             backing: .buffered, defer: false)
+        panel.contentMinSize = NSSize(width: 460, height: 210)
         panel.level = .statusBar
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -41,6 +50,17 @@ final class ReviewPanelController {
         panel.isMovableByWindowBackground = true
         panel.becomesKeyOnlyIfNeeded = true
         self.panel = panel
+
+        // Remember the user's size for the next dictation
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didEndLiveResizeNotification, object: panel, queue: .main
+        ) { note in
+            guard let window = note.object as? NSWindow else { return }
+            MainActor.assumeIsolated {
+                UserDefaults.standard.set(Double(window.frame.width), forKey: "review.width")
+                UserDefaults.standard.set(Double(window.frame.height), forKey: "review.height")
+            }
+        }
     }
 
     private func position() {
@@ -56,6 +76,7 @@ struct ReviewView: View {
     @EnvironmentObject var state: AppState
     @State private var editedText = ""
     @State private var countdown: Int? = 12
+    @State private var didSeedText = false
     @State private var aiRunning = false
     @State private var aiStatus: String?
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -79,14 +100,16 @@ struct ReviewView: View {
                 .lineSpacing(3)
                 .scrollContentBackground(.hidden)
                 .padding(6)
-                .frame(height: 110)
+                .frame(minHeight: 90, maxHeight: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
                         .fill(Color(nsColor: .textBackgroundColor))
                         .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
                             .strokeBorder(.quaternary, lineWidth: 1))
                 )
-                .onChange(of: editedText) { _ in countdown = nil }
+                .onChange(of: editedText) { _ in
+                    if didSeedText { countdown = nil } else { didSeedText = true }
+                }
 
             HStack(spacing: 10) {
                 aiFixButton
@@ -113,7 +136,7 @@ struct ReviewView: View {
             }
         }
         .padding(16)
-        .frame(width: 524)
+        .frame(minWidth: 444, maxWidth: .infinity, minHeight: 194, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(.regularMaterial)
@@ -126,6 +149,7 @@ struct ReviewView: View {
         .onReceive(tick) { _ in
             guard let c = countdown else { return }
             if c <= 1 {
+                countdown = nil
                 state.finishReview(editedText: nil)
             } else {
                 countdown = c - 1

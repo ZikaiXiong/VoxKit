@@ -1,6 +1,6 @@
 import Foundation
 
-/// Transcription orchestration: auto-split → per-chunk transcription (with retry) → timestamped merge → auto-apply correction rules
+/// Transcription orchestration: auto-split → per-chunk transcription (with retry) → timestamped merge → optional AI proofread
 @MainActor
 final class TranscriptionService: ObservableObject {
     struct Progress: Equatable {
@@ -62,8 +62,8 @@ final class TranscriptionService: ObservableObject {
                     let mb = Double(size) / 1_048_576
                     if mb > provider.maxUploadMB {
                         throw VoxError.message(L.t(
-                            "分段文件 \(String(format: "%.1f", mb))MB 超过 \(provider.displayName) 的 \(Int(provider.maxUploadMB))MB 上限，请在「设置 → 分段长度」中调小",
-                            "Chunk is \(String(format: "%.1f", mb))MB, over \(provider.displayName)'s \(Int(provider.maxUploadMB))MB limit. Reduce chunk length in Settings."))
+                            "Chunk is \(String(format: "%.1f", mb))MB, over \(provider.displayName)'s \(Int(provider.maxUploadMB))MB limit. Reduce chunk length in Settings.",
+                            "分段文件 \(String(format: "%.1f", mb))MB 超过 \(provider.displayName) 的 \(Int(provider.maxUploadMB))MB 上限，请在「设置 → 分段长度」中调小"))
                     }
                 }
                 var text = ""
@@ -105,20 +105,11 @@ final class TranscriptionService: ObservableObject {
             let joined = pieces.joined(separator: chunks.count > 1 ? "\n\n" : "\n")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
 
-            // 4. Create the version and auto-apply learned correction rules (original text preserved)
+            // 4. Create the version and attach the version (original text preserved)
             var version = TranscriptVersion(
                 providerID: provider.id, model: model, language: language.rawValue,
                 originalText: joined, chunkCount: chunks.count,
                 note: failures > 0 ? L.t("\(failures)/\(chunks.count) chunks failed", "\(failures)/\(chunks.count) 段失败") : nil)
-
-            if UserDefaults.standard.object(forKey: "autoApplyRules") as? Bool ?? true {
-                let (fixed, n) = Learner.applyActiveRules(store.lexicon.rules, to: joined)
-                if n > 0, fixed != joined {
-                    version.correctedText = fixed
-                    let auto = L.t("Auto-fixed \(n) spots", "自动修正 \(n) 处")
-                    version.note = version.note.map { $0 + "；" + auto } ?? auto
-                }
-            }
 
             // 5. Optional: AI grammar correction (holistic proofread using the user glossary)
             if AICorrector.autoEnabled && AICorrector.isConfigured && failures == 0 {
@@ -133,14 +124,14 @@ final class TranscriptionService: ObservableObject {
                         if outcome.skippedChunks > 0 {
                             tag += L.t(" (\(outcome.skippedChunks) chunk(s) skipped)", "（\(outcome.skippedChunks) 段跳过）")
                         }
-                        version.note = version.note.map { $0 + "；" + tag } ?? tag
+                        version.note = version.note.map { $0 + " · " + tag } ?? tag
                     } else if outcome.skippedChunks > 0 {
                         let tag = L.t("AI correction skipped", "AI 修正被跳过")
-                        version.note = version.note.map { $0 + "；" + tag } ?? tag
+                        version.note = version.note.map { $0 + " · " + tag } ?? tag
                     }
                 } catch {
                     let tag = L.t("AI correction failed", "AI 修正失败")
-                    version.note = version.note.map { $0 + "；" + tag } ?? tag
+                    version.note = version.note.map { $0 + " · " + tag } ?? tag
                 }
             }
 

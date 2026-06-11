@@ -1,22 +1,26 @@
 import Foundation
 
-struct Suggestion: Identifiable {
-    var id: UUID { rule.id }
-    let rule: CorrectionRule
-    let occurrences: Int
-}
-
-/// Correction learning engine:
-/// - Diffs the model output against the user's edits to extract replacement pairs (homophones like 佳明→嘉明)
-/// - A pair seen ≥2 times activates automatically; later transcripts get suggestions / auto-fixes
-/// - Active pairs + manual hotwords are injected as a prompt into supporting cloud models, improving recognition at the source
+/// Vocabulary learning. Short wrong→right replacement pairs proved too
+/// context-dependent to reapply safely, so the lexicon stores *words* instead:
+/// when the user corrects a transcript, the terms they typed in are extracted
+/// and promoted to hotwords. Models then fix similar-sounding mistakes in
+/// context rather than via mechanical substitution.
 enum Learner {
-    // MARK: Pair extraction (character-level diff)
+    // MARK: Vocabulary extraction from corrections
 
+    /// Words the user introduced while editing — candidates for the lexicon.
+    static func vocabularyFromCorrection(original: String, corrected: String) -> [String] {
+        extractPairs(original: original, corrected: corrected)
+            .map { $0.1.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter(isVocabularyWord)
+    }
+
+    /// Character-level diff (Myers via CollectionDifference) producing
+    /// (removed, inserted) runs at aligned positions.
     static func extractPairs(original: String, corrected: String) -> [(String, String)] {
         guard original != corrected else { return [] }
         let o = Array(original), c = Array(corrected)
-        guard o.count <= 30_000, c.count <= 30_000 else { return [] }   // cap on diff cost
+        guard o.count <= 30_000, c.count <= 30_000 else { return [] }   // diff cost cap
 
         let diff = c.difference(from: o)
         var removed = Set<Int>(), inserted = Set<Int>()
@@ -36,7 +40,7 @@ enum Learner {
                 var a = "", b = ""
                 while i < o.count && removed.contains(i) { a.append(o[i]); i += 1 }
                 while j < c.count && inserted.contains(j) { b.append(c[j]); j += 1 }
-                if isMeaningfulPair(a, b) { pairs.append((a, b)) }
+                pairs.append((a, b))
             } else if iRem {
                 while i < o.count && removed.contains(i) { i += 1 }
             } else if jIns {
@@ -48,57 +52,30 @@ enum Learner {
         return pairs
     }
 
-    private static func isMeaningfulPair(_ a: String, _ b: String) -> Bool {
-        let ta = a.trimmingCharacters(in: .whitespacesAndNewlines)
-        let tb = b.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !ta.isEmpty, !tb.isEmpty, ta != tb else { return false }
-        guard ta.count <= 12, tb.count <= 12 else { return false }
-        let punctuation = CharacterSet.punctuationCharacters.union(.symbols).union(.whitespacesAndNewlines)
-        let aOnlyPunct = ta.unicodeScalars.allSatisfy { punctuation.contains($0) }
-        let bOnlyPunct = tb.unicodeScalars.allSatisfy { punctuation.contains($0) }
-        return !aOnlyPunct && !bOnlyPunct
+    /// A lexicon entry must look like a word or term, not punctuation noise
+    /// or a sentence-sized rewrite.
+    static func isVocabularyWord(_ text: String) -> Bool {
+        guard (2...20).contains(text.count) else { return false }
+        let letters = CharacterSet.letters
+        guard text.unicodeScalars.contains(where: { letters.contains($0) }) else { return false }
+        // Reject anything longer than a short compound term
+        guard text.components(separatedBy: .whitespaces).count <= 3 else { return false }
+        return true
     }
 
-    // MARK: Suggestions and application
+    // MARK: Hotword prompt
 
-    static func suggestions(for text: String, rules: [CorrectionRule]) -> [Suggestion] {
-        guard !text.isEmpty else { return [] }
-        return rules.filter(\.isActive).compactMap { rule in
-            let n = text.components(separatedBy: rule.original).count - 1
-            return n > 0 ? Suggestion(rule: rule, occurrences: n) : nil
-        }
-        .sorted { $0.rule.count > $1.rule.count }
-    }
-
-    static func apply(_ rule: CorrectionRule, to text: String) -> String {
-        text.replacingOccurrences(of: rule.original, with: rule.replacement)
-    }
-
-    /// Applies all active rules; returns (new text, total replacement count)
-    static func applyActiveRules(_ rules: [CorrectionRule], to text: String) -> (String, Int) {
-        var result = text
-        var total = 0
-        for rule in rules.filter(\.isActive) {
-            let n = result.components(separatedBy: rule.original).count - 1
-            if n > 0 {
-                result = result.replacingOccurrences(of: rule.original, with: rule.replacement)
-                total += n
-            }
-        }
-        return (result, total)
-    }
-
-    /// Hotword prompt (injected into cloud models to bias recognition)
+    /// Vocabulary list injected into transcription prompts (and AI correction)
     static func hotwordPrompt(_ lexicon: LexiconData) -> String? {
-        var words = lexicon.hotwords
-        words += lexicon.rules.filter(\.isActive).sorted { $0.count > $1.count }.map(\.replacement)
         var seen = Set<String>()
-        let unique = words.filter { $0.count >= 2 && seen.insert($0).inserted }.prefix(24)
+        let unique = lexicon.hotwords
+            .filter { $0.count >= 2 && seen.insert($0).inserted }
+            .prefix(24)
         guard !unique.isEmpty else { return nil }
         return "常用词汇：" + unique.joined(separator: "、")
     }
 
-    // MARK: Frequent-token stats (mining hotword candidates from corrected texts)
+    // MARK: Frequent-token mining
 
     private static let stopwords: Set<String> = [
         "所以", "我们", "你们", "他们", "这个", "那个", "就是", "然后", "一个", "什么",
@@ -108,6 +85,7 @@ enum Learner {
         "what", "about", "there", "which", "would", "could", "should", "your",
     ]
 
+    /// Frequent words mined from transcripts — hotword candidates for the Lexicon page
     static func frequentTokens(in texts: [String], excluding existing: Set<String>) -> [(String, Int)] {
         var counts: [String: Int] = [:]
         for text in texts {

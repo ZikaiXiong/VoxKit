@@ -37,11 +37,29 @@ final class Store: ObservableObject {
         if let data = try? Data(contentsOf: lexiconFile),
            let decoded = try? JSONDecoder().decode(LexiconData.self, from: data) {
             lexicon = decoded
+            migrateLegacyRules(from: data)
         }
         if let data = try? Data(contentsOf: speechFile),
            let decoded = try? JSONDecoder().decode([SpeechItem].self, from: data) {
             speechItems = decoded
         }
+    }
+
+    /// One-time migration: the old correction-rule system stored wrong→right
+    /// pairs; the "right" sides that look like words are folded into hotwords.
+    private func migrateLegacyRules(from data: Data) {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let rules = json["rules"] as? [[String: Any]], !rules.isEmpty else { return }
+        var added = false
+        for rule in rules {
+            guard (rule["enabled"] as? Bool) ?? true,
+                  let replacement = rule["replacement"] as? String,
+                  Learner.isVocabularyWord(replacement),
+                  !lexicon.hotwords.contains(replacement) else { continue }
+            lexicon.hotwords.append(replacement)
+            added = true
+        }
+        if added { scheduleSave() }   // the rewrite drops the legacy "rules" key
     }
 
     func scheduleSave() {
@@ -97,12 +115,6 @@ final class Store: ObservableObject {
 
     func add(_ session: Session) {
         sessions.insert(session, at: 0)
-        scheduleSave()
-    }
-
-    func update(_ session: Session) {
-        guard let i = sessions.firstIndex(where: { $0.id == session.id }) else { return }
-        sessions[i] = session
         scheduleSave()
     }
 
@@ -176,46 +188,18 @@ final class Store: ObservableObject {
 
     // MARK: Lexicon operations
 
-    /// Learns from one correction; returns the number of pairs extracted
+    /// Learns vocabulary from one correction: words the user typed in while
+    /// editing become hotwords. Returns the number of new words added.
     @discardableResult
     func learn(original: String, corrected: String) -> Int {
-        let pairs = Learner.extractPairs(original: original, corrected: corrected)
-        guard !pairs.isEmpty else { return 0 }
-        for (a, b) in pairs {
-            if let i = lexicon.rules.firstIndex(where: { $0.original == a && $0.replacement == b }) {
-                lexicon.rules[i].count += 1
-                lexicon.rules[i].updated = Date()
-            } else {
-                lexicon.rules.append(CorrectionRule(original: a, replacement: b))
-            }
+        let words = Learner.vocabularyFromCorrection(original: original, corrected: corrected)
+        var added = 0
+        for word in words where !lexicon.hotwords.contains(word) {
+            lexicon.hotwords.append(word)
+            added += 1
         }
-        lexicon.rules.sort { $0.count > $1.count }
-        scheduleSave()
-        return pairs.count
-    }
-
-    func addManualRule(original: String, replacement: String) {
-        let a = original.trimmingCharacters(in: .whitespaces)
-        let b = replacement.trimmingCharacters(in: .whitespaces)
-        guard !a.isEmpty, !b.isEmpty, a != b else { return }
-        if let i = lexicon.rules.firstIndex(where: { $0.original == a && $0.replacement == b }) {
-            lexicon.rules[i].isManual = true
-            lexicon.rules[i].enabled = true
-        } else {
-            lexicon.rules.insert(CorrectionRule(original: a, replacement: b, isManual: true), at: 0)
-        }
-        scheduleSave()
-    }
-
-    func deleteRule(_ rule: CorrectionRule) {
-        lexicon.rules.removeAll { $0.id == rule.id }
-        scheduleSave()
-    }
-
-    func toggleRule(_ rule: CorrectionRule) {
-        guard let i = lexicon.rules.firstIndex(where: { $0.id == rule.id }) else { return }
-        lexicon.rules[i].enabled.toggle()
-        scheduleSave()
+        if added > 0 { scheduleSave() }
+        return added
     }
 
     func addHotword(_ word: String) {

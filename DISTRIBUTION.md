@@ -41,12 +41,12 @@ a plain double-click, no warnings:
 3. **Notarize** (one-time credential setup with an app-specific password):
    ```bash
    xcrun notarytool store-credentials voxkit --apple-id YOUR_APPLE_ID --team-id TEAMID
-   xcrun notarytool submit dist/VoxKit-0.6.0.zip --keychain-profile voxkit --wait
+   xcrun notarytool submit dist/VoxKit-<version>.zip --keychain-profile voxkit --wait
    ```
 4. Staple the ticket and re-zip:
    ```bash
    xcrun stapler staple dist/VoxKit.app
-   ditto -c -k --keepParent dist/VoxKit.app dist/VoxKit-0.6.0-notarized.zip
+   ditto -c -k --keepParent dist/VoxKit.app dist/VoxKit-<version>-notarized.zip
    ```
 
 ## Notes

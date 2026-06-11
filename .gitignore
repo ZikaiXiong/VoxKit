@@ -5,7 +5,7 @@ dist/
 .swiftpm/
 xcuserdata/
 
-# Defensive: personal data lives in ~/Library/Application Support/VoxNote/
+# Defensive: personal data lives in ~/Library/Application Support/VoxKit/
 # and never belongs in this repo, but guard against accidental copies.
 .claude/
 *.wav

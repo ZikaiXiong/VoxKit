@@ -310,7 +310,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
         guard let url = recorder.stop(), duration > 0.4 else {
             live.cancel()
             usingLive = false
-            try? FileManager.default.removeItem(at: recorder.fileURL ?? URL(fileURLWithPath: "/dev/null"))
+            if let url = recorder.fileURL { try? FileManager.default.removeItem(at: url) }
             finishQuickHUD(micWasLive
                            ? L.t("Too short, cancelled", "录音太短，已取消")
                            : L.t("Mic wasn't ready yet — try again", "麦克风尚未就绪，请再试一次"),
@@ -334,13 +334,6 @@ final class AppState: ObservableObject, @unchecked Sendable {
                     var version = TranscriptVersion(
                         providerID: "apple", model: "on-device",
                         language: language.rawValue, originalText: trimmed)
-                    if (UserDefaults.standard.object(forKey: "autoApplyRules") as? Bool) ?? true {
-                        let (fixed, n) = Learner.applyActiveRules(store.lexicon.rules, to: trimmed)
-                        if n > 0, fixed != trimmed {
-                            version.correctedText = fixed
-                            version.note = L.t("Auto-fixed \(n) spots", "自动修正 \(n) 处")
-                        }
-                    }
                     // Optional: AI grammar correction (with glossary)
                     if AICorrector.autoEnabled && AICorrector.isConfigured {
                         processingDetail = L.t("AI correcting…", "AI 修正中…")
@@ -349,7 +342,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
                            outcome.hasChange {
                             version.correctedText = outcome.text
                             let tag = L.t("AI corrected", "AI 修正")
-                            version.note = version.note.map { $0 + "；" + tag } ?? tag
+                            version.note = version.note.map { $0 + " · " + tag } ?? tag
                         }
                         processingDetail = nil
                     }
@@ -438,7 +431,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
                     let finalTag = tag
                     store.updateTranscript(sessionID: sessionID, transcriptID: transcriptID) {
                         $0.correctedText = outcome.text
-                        $0.note = $0.note.map { n in n.contains(finalTag) ? n : n + "；" + finalTag } ?? finalTag
+                        $0.note = $0.note.map { n in n.contains(finalTag) ? n : n + " · " + finalTag } ?? finalTag
                     }
                 } else if outcome.skippedChunks > 0 {
                     errorMessage = L.t("The AI output drifted too far from the original or was blocked by guardrails; the original text was kept. Retry, or switch the correction model in Settings.",

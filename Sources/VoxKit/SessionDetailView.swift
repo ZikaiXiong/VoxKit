@@ -34,7 +34,6 @@ private struct DetailContent: View {
 
             if let version {
                 versionBar(version)
-                suggestionBar(version)
                 textTabs(version)
                 footer(version)
             } else if let progress = inProgress {
@@ -177,59 +176,6 @@ private struct DetailContent: View {
         .help(L.t("Re-transcribe with another model (the audio is never lost)", "用其他模型重新转写（原录音永不丢失）"))
     }
 
-    // MARK: Correction suggestions
-
-    @ViewBuilder
-    private func suggestionBar(_ version: TranscriptVersion) -> some View {
-        let text = version.correctedText ?? version.originalText
-        let suggestions = Learner.suggestions(for: text, rules: store.lexicon.rules)
-        if !suggestions.isEmpty {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    Image(systemName: "wand.and.stars")
-                        .foregroundStyle(.indigo)
-                    ForEach(suggestions.prefix(8)) { s in
-                        Button {
-                            applyRule(s.rule, to: version)
-                        } label: {
-                            HStack(spacing: 4) {
-                                Text(s.rule.original).strikethrough().foregroundStyle(.secondary)
-                                Image(systemName: "arrow.right").font(.caption2)
-                                Text(s.rule.replacement).foregroundStyle(.primary)
-                                Text("×\(s.occurrences)").font(.caption2).foregroundStyle(.tertiary)
-                            }
-                            .font(.callout)
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 4)
-                            .background(Capsule().fill(Color.indigo.opacity(0.1)))
-                        }
-                        .buttonStyle(.plain)
-                        .help(L.t("Replace all \(s.occurrences) occurrence(s)", "点击替换全部 \(s.occurrences) 处"))
-                    }
-                    if suggestions.count > 1 {
-                        Button(L.t("Apply All", "全部应用")) {
-                            var t = version.correctedText ?? version.originalText
-                            for s in suggestions { t = Learner.apply(s.rule, to: t) }
-                            store.updateTranscript(sessionID: session.id, transcriptID: version.id) { $0.correctedText = t }
-                            tab = .corrected
-                            showToast(L.t("Applied \(suggestions.count) corrections", "已应用 \(suggestions.count) 条修正"))
-                        }
-                        .controlSize(.small)
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
-    private func applyRule(_ rule: CorrectionRule, to version: TranscriptVersion) {
-        let base = version.correctedText ?? version.originalText
-        let applied = Learner.apply(rule, to: base)
-        store.updateTranscript(sessionID: session.id, transcriptID: version.id) { $0.correctedText = applied }
-        tab = .corrected
-        showToast(L.t("Replaced “\(rule.original) → \(rule.replacement)”", "已替换「\(rule.original) → \(rule.replacement)」"))
-    }
-
     // MARK: Text area
 
     private func textTabs(_ version: TranscriptVersion) -> some View {
@@ -302,14 +248,14 @@ private struct DetailContent: View {
                 let corrected = version.correctedText ?? version.originalText
                 let learned = store.learn(original: version.originalText, corrected: corrected)
                 showToast(learned > 0
-                          ? L.t("Saved — learned \(learned) correction pair(s)", "已保存，学到 \(learned) 个修正词对")
+                          ? L.t("Saved — \(learned) new word(s) added to the lexicon", "已保存，\(learned) 个新词加入词库")
                           : L.t("Corrected text saved", "已保存修正稿"))
             } label: {
                 Label(L.t("Save & Learn", "保存修正并学习"), systemImage: "brain.head.profile")
             }
             .buttonStyle(.borderedProminent)
             .disabled(!version.hasCorrection)
-            .help(L.t("Diffs against the original to learn your fixes for next time", "对比原文提取你改过的词，下次自动提示/修正"))
+            .help(L.t("Words you typed in become lexicon hotwords", "你改出来的词会加入词库热词"))
         }
     }
 

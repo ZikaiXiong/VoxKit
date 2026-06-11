@@ -5,7 +5,6 @@ import ServiceManagement
 struct SettingsView: View {
     @EnvironmentObject var state: AppState
 
-    @AppStorage("autoApplyRules") private var autoApplyRules = true
     @AppStorage("quickReview") private var quickReview = true
     @AppStorage("autoPaste") private var autoPaste = false
     @AppStorage("apple.lang") private var appleLang = "zh"
@@ -90,7 +89,6 @@ struct SettingsView: View {
             Toggle(L.t("Show a review panel after dictation", "听写完成后弹出修正窗"), isOn: $quickReview)
                 .help(L.t("Text is copied first; the panel never steals focus, edits are re-copied and learned",
                           "结果仍会先复制；修正窗不抢焦点，改动会重新复制并让词典学习"))
-            Toggle(L.t("Auto-apply learned correction rules", "新转写自动应用已学会的修正规则"), isOn: $autoApplyRules)
             Toggle(L.t("Auto-paste after quick dictation", "快速听写复制后自动粘贴到当前输入框"), isOn: $autoPaste)
                 .onChange(of: autoPaste) { on in
                     if on && !Paster.trusted { Paster.requestTrust() }
@@ -179,9 +177,8 @@ struct SettingsView: View {
     /// Makes the lexicon's participation visible: every correction request includes these
     private var lexiconSummary: String {
         let hotwords = state.store.lexicon.hotwords.count
-        let rules = state.store.lexicon.rules.filter(\.isActive).count
-        return L.t("Every request includes your lexicon: \(hotwords) hotword(s) · \(rules) active rule(s). Apple Intelligence is instant; Groq is the fastest cloud option.",
-                   "每次修正都会带上词库：热词 \(hotwords) · 生效规则 \(rules)。Apple 智能即时完成，Groq 是最快的云端选项。")
+        return L.t("Every request includes your \(hotwords) lexicon word(s). Groq is the fastest cloud option.",
+                   "每次修正都会带上你的 \(hotwords) 个词库词汇。Groq 是最快的云端选项。")
     }
 
     // MARK: API keys
@@ -246,7 +243,7 @@ struct SettingsView: View {
     }
 
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.6.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.8.0"
     }
 }
 
@@ -296,9 +293,10 @@ private struct ProviderKeyRow: View {
                                   : L.t("Paste API key", "粘贴 API Key"), text: $key)
                     .textFieldStyle(.roundedBorder)
                 Button(L.t("Save", "保存")) {
-                    Keychain.set(key.trimmingCharacters(in: .whitespacesAndNewlines), account: provider.id)
-                    key = ""
-                    saved = true
+                    if Keychain.set(key.trimmingCharacters(in: .whitespacesAndNewlines), account: provider.id) {
+                        key = ""
+                        saved = true
+                    }
                 }
                 .disabled(key.trimmingCharacters(in: .whitespaces).isEmpty)
                 if saved {
@@ -317,8 +315,8 @@ private struct ProviderKeyRow: View {
             }
             DisclosureGroup(L.t("Advanced", "高级")) {
                 VStack(alignment: .leading, spacing: 6) {
-                    TextField(L.t("API 地址（留空用默认：\(provider.defaultBaseURL.isEmpty ? "无" : provider.defaultBaseURL)）",
-                                  "API base URL (default: \(provider.defaultBaseURL.isEmpty ? "none" : provider.defaultBaseURL))"),
+                    TextField(L.t("API base URL (default: \(provider.defaultBaseURL.isEmpty ? "none" : provider.defaultBaseURL))",
+                                  "API 地址（留空用默认：\(provider.defaultBaseURL.isEmpty ? "无" : provider.defaultBaseURL)）"),
                               text: $baseURL)
                         .textFieldStyle(.roundedBorder)
                         .onChange(of: baseURL) { v in

@@ -64,7 +64,6 @@ enum AICorrector {
         var text: String
         var changedChunks = 0
         var skippedChunks = 0
-        var totalChunks = 0
         var hasChange: Bool { changedChunks > 0 }
     }
 
@@ -78,34 +77,36 @@ enum AICorrector {
         let system = systemPrompt(language: language, lexicon: lexicon)
         let chunks = split(trimmed, maxLength: providerID == appleID ? 1500 : 2600)
 
-        var outcome = Outcome(text: "", totalChunks: chunks.count)
-        var pieces: [String] = []
+        var outcome = Outcome(text: "")
+        var rebuilt = ""
         var lastError: Error?
         for chunk in chunks {
+            let piece: String
             do {
                 let raw = providerID == appleID
-                    ? try await appleCorrect(chunk: chunk, instructions: system)
-                    : try await chatCorrect(chunk: chunk, system: system)
+                    ? try await appleCorrect(chunk: chunk.text, instructions: system)
+                    : try await chatCorrect(chunk: chunk.text, system: system)
                 let fixed = stripWrapper(raw).trimmingCharacters(in: .whitespacesAndNewlines)
                 // Hard hallucination gate: a correction must stay close to its input.
                 // Models sometimes "reply to" conversational speech instead of proofreading it.
-                if isAcceptable(original: chunk, corrected: fixed) {
-                    pieces.append(fixed)
-                    if fixed != chunk { outcome.changedChunks += 1 }
+                if isAcceptable(original: chunk.text, corrected: fixed) {
+                    piece = fixed
+                    if fixed != chunk.text { outcome.changedChunks += 1 }
                 } else {
-                    pieces.append(chunk)
+                    piece = chunk.text
                     outcome.skippedChunks += 1
                 }
             } catch {
-                pieces.append(chunk)
+                piece = chunk.text
                 outcome.skippedChunks += 1
                 lastError = error
             }
+            rebuilt += chunk.separator + piece
         }
-        if outcome.skippedChunks == chunks.count, let lastError {
+        if outcome.changedChunks == 0, outcome.skippedChunks == chunks.count, let lastError {
             throw lastError
         }
-        outcome.text = pieces.joined(separator: "\n\n")
+        outcome.text = rebuilt
         return outcome
     }
 
@@ -137,19 +138,12 @@ enum AICorrector {
 
     private static func systemPrompt(language: String, lexicon: LexiconData) -> String {
         var glossary = ""
-        let hotwords = (lexicon.hotwords + lexicon.rules.filter(\.isActive).map(\.replacement))
         var seen = Set<String>()
-        let words = hotwords.filter { seen.insert($0).inserted }.prefix(40)
+        let words = lexicon.hotwords.filter { seen.insert($0).inserted }.prefix(40)
         if !words.isEmpty {
             glossary += L.t("User glossary — the speaker's frequent proper nouns and technical terms. When the text contains a similar-sounding but differently written word, it is likely a mis-recognition of one of these: ",
                             "用户词库——说话人常用的专有名词和术语。文本中出现与这些词读音相近但写法不同的词时，很可能是它们的误识别：")
                 + words.joined(separator: "、") + "\n"
-        }
-        let pairs = lexicon.rules.filter(\.isActive).prefix(30).map { "\($0.original)→\($0.replacement)" }
-        if !pairs.isEmpty {
-            glossary += L.t("Past corrections (wrong→right) from PREVIOUS recordings. Do NOT apply them mechanically: replace only when the left side reads wrong in the CURRENT context and the replacement clearly improves the sentence. If the original word already makes sense here, leave it untouched: ",
-                            "历史纠错对照（错→对），来自【以前的】录音。不要照搬硬套：仅当左侧词在【当前】上下文中明显不通、替换后整句明显更合理时才替换；如果原词在这里本来就正确通顺，必须保持原样：")
-                + pairs.joined(separator: "，") + "\n"
         }
         let langHint: String
         switch language {
@@ -185,26 +179,40 @@ enum AICorrector {
             """)
     }
 
-    /// Groups paragraphs split on blank lines, hard-splitting oversized ones, keeping each chunk within maxLength characters
-    static func split(_ text: String, maxLength: Int) -> [String] {
+    struct TextChunk {
+        let text: String
+        /// What preceded this chunk in the source — "" for hard cuts inside a
+        /// paragraph, so rejoining never invents paragraph breaks
+        let separator: String
+    }
+
+    /// Groups paragraphs split on blank lines, hard-splitting oversized ones,
+    /// keeping each chunk within maxLength characters
+    static func split(_ text: String, maxLength: Int) -> [TextChunk] {
         let paragraphs = text.components(separatedBy: "\n\n")
-        var chunks: [String] = []
+        var chunks: [TextChunk] = []
         var current = ""
         func flush() {
             let t = current.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !t.isEmpty { chunks.append(t) }
+            if !t.isEmpty { chunks.append(TextChunk(text: t, separator: chunks.isEmpty ? "" : "\n\n")) }
             current = ""
         }
         for p in paragraphs {
             if p.count > maxLength {
                 flush()
                 var rest = Substring(p)
+                var firstSlice = true
                 while rest.count > maxLength {
                     let cut = rest.index(rest.startIndex, offsetBy: maxLength)
-                    chunks.append(String(rest[..<cut]))
+                    chunks.append(TextChunk(text: String(rest[..<cut]),
+                                            separator: firstSlice ? (chunks.isEmpty ? "" : "\n\n") : ""))
+                    firstSlice = false
                     rest = rest[cut...]
                 }
-                if !rest.isEmpty { chunks.append(String(rest)) }
+                if !rest.isEmpty {
+                    chunks.append(TextChunk(text: String(rest),
+                                            separator: firstSlice ? (chunks.isEmpty ? "" : "\n\n") : ""))
+                }
             } else if current.count + p.count + 2 > maxLength {
                 flush()
                 current = p
@@ -213,7 +221,7 @@ enum AICorrector {
             }
         }
         flush()
-        return chunks.isEmpty ? [text] : chunks
+        return chunks.isEmpty ? [TextChunk(text: text, separator: "")] : chunks
     }
 
     // MARK: On-device Apple model
@@ -283,7 +291,7 @@ enum AICorrector {
                let err = obj["error"] as? [String: Any], let msg = err["message"] as? String {
                 message = msg
             }
-            throw VoxError.message("\(provider.displayName) \(http.statusCode)：\(String(message.prefix(300)))")
+            throw VoxError.message("\(provider.displayName) \(http.statusCode): \(String(message.prefix(300)))")
         }
         guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let choices = obj["choices"] as? [[String: Any]],

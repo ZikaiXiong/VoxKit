@@ -185,7 +185,7 @@ enum TTSEngine {
                let err = obj["error"] as? [String: Any], let msg = err["message"] as? String {
                 message = msg
             }
-            throw VoxError.message("\(provider.displayName) \(http.statusCode)：\(String(message.prefix(300)))")
+            throw VoxError.message("\(provider.displayName) \(http.statusCode): \(String(message.prefix(300)))")
         }
         guard data.count > 200 else {
             throw VoxError.message(L.t("\(provider.displayName) returned empty audio", "\(provider.displayName) 返回的音频为空"))
