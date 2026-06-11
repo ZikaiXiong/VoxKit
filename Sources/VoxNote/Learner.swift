@@ -122,10 +122,12 @@ enum Learner {
                 cjk = ""
             }
             for scalar in text.unicodeScalars {
-                if (0x4E00...0x9FFF).contains(scalar.value) {
+                // CJK ideographs + Japanese kana count as one run category
+                if (0x4E00...0x9FFF).contains(scalar.value) || (0x3040...0x30FF).contains(scalar.value) {
                     flushLatin()
                     cjk.unicodeScalars.append(scalar)
-                } else if CharacterSet.alphanumerics.contains(scalar), scalar.isASCII {
+                } else if CharacterSet.alphanumerics.contains(scalar), scalar.value < 0x3000 {
+                    // Latin incl. accented letters (Spanish/French)
                     flushCJK()
                     latin.unicodeScalars.append(scalar)
                 } else {

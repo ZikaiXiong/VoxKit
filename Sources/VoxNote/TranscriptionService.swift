@@ -14,11 +14,9 @@ final class TranscriptionService: ObservableObject {
     var isBusy: Bool { !progress.isEmpty }
 
     static func effectiveAppleLang(_ language: LanguageChoice) -> String {
-        switch language {
-        case .en: return "en"
-        case .zh: return "zh"
-        case .auto: return UserDefaults.standard.string(forKey: "apple.lang") ?? "zh"
-        }
+        language == .auto
+            ? (UserDefaults.standard.string(forKey: "apple.lang") ?? "zh")
+            : language.rawValue
     }
 
     @discardableResult
@@ -48,7 +46,8 @@ final class TranscriptionService: ObservableObject {
             // Simplified-Chinese prompt steers Chinese output away from Traditional.
             var promptParts: [String] = []
             if provider.supportsPrompt {
-                if language != .en { promptParts.append("以下是普通话的句子，请使用简体中文转写。") }
+                // Only for Chinese (or auto, where Chinese is the primary use case)
+                if language == .zh || language == .auto { promptParts.append("以下是普通话的句子，请使用简体中文转写。") }
                 if let hotwords = Learner.hotwordPrompt(store.lexicon) { promptParts.append(hotwords) }
             }
             let prompt = promptParts.isEmpty ? nil : promptParts.joined(separator: " ")

@@ -49,8 +49,9 @@ enum TTSEngine {
 
     /// System voices for the picker, current-UI-language ones first
     static func systemVoices() -> [AVSpeechSynthesisVoice] {
+        let supported = ["zh", "en", "es", "fr", "ja"]
         let all = AVSpeechSynthesisVoice.speechVoices()
-            .filter { $0.language.hasPrefix("zh") || $0.language.hasPrefix("en") }
+            .filter { voice in supported.contains(where: { voice.language.hasPrefix($0) }) }
             .sorted { ($0.language, $0.name) < ($1.language, $1.name) }
         let preferred = L.zh ? "zh" : "en"
         return all.sorted { ($0.language.hasPrefix(preferred) ? 0 : 1) < ($1.language.hasPrefix(preferred) ? 0 : 1) }

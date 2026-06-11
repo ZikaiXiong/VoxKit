@@ -20,8 +20,8 @@ private struct LexiconContent: View {
             VStack(alignment: .leading, spacing: 18) {
                 Text(L.t("词典", "Lexicon"))
                     .font(.title2.weight(.semibold))
-                Text(L.t("同一个改法出现 2 次自动生效——之后用于修正建议、新转写的自动修正与热词注入。",
-                         "A fix seen twice becomes active — powering suggestions, auto-correction, and hotword injection."))
+                Text(L.t("出现 2 次的改法自动生效，用于自动修正与热词。",
+                         "A fix seen twice becomes active, powering auto-correction and hotwords."))
                     .font(.callout)
                     .foregroundStyle(.secondary)
 
@@ -117,9 +117,8 @@ private struct LexiconContent: View {
             VStack(alignment: .leading, spacing: 10) {
                 Label(L.t("热词（专有名词、人名、术语）", "Hotwords (proper nouns, names, jargon)"), systemImage: "flame")
                     .font(.headline)
-                Text(L.t("注入转写模型与 AI 修正，让专有名词从源头拼对。",
-                         "Injected into transcription and AI correction so these terms come out right."))
-                    .captionStyle()
+                    .help(L.t("注入转写模型与 AI 修正，让专有名词从源头拼对",
+                              "Injected into transcription and AI correction so these terms come out right"))
 
                 HStack {
                     TextField(L.t("输入热词后回车", "Type a hotword and press Return"), text: $newHotword)
@@ -171,9 +170,6 @@ private struct LexiconContent: View {
                     }
                     .buttonStyle(.borderless)
                 }
-                Text(L.t("点「+」加入热词。", "Click “+” to add as a hotword."))
-                    .captionStyle()
-
                 FlowChips(items: candidates.map { "\($0.0)|\($0.1)" },
                           emptyHint: L.t("录音多了之后这里会出现你的高频词", "Your frequent words will appear here as you record more")) { packed in
                     let parts = packed.split(separator: "|")

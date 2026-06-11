@@ -247,10 +247,6 @@ private struct DetailContent: View {
                     TagChip(text: L.t("与原文不同", "Differs from original"), color: .green)
                 }
                 Spacer()
-                Text(L.t("在此改错字，保存后自动学习你的改法",
-                         "Edit here — saving learns your fixes"))
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
             }
 
             Group {

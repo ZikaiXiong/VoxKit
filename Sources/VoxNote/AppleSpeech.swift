@@ -16,7 +16,14 @@ enum AppleSpeech {
     }
 
     static func recognizer(for lang: String) -> SFSpeechRecognizer? {
-        let localeID = (lang == "en") ? "en-US" : "zh-CN"
+        let localeID: String
+        switch lang {
+        case "en": localeID = "en-US"
+        case "es": localeID = "es-ES"
+        case "fr": localeID = "fr-FR"
+        case "ja": localeID = "ja-JP"
+        default: localeID = "zh-CN"
+        }
         return SFSpeechRecognizer(locale: Locale(identifier: localeID))
     }
 

@@ -45,9 +45,6 @@ struct SettingsView: View {
                     Text(d.name).tag(d.id)
                 }
             }
-            Text(L.t("新麦克风自动出现，拔出后回退系统默认。",
-                     "New mics appear automatically; unplugged ones fall back to default."))
-                .font(.caption).foregroundStyle(.secondary)
             Toggle(L.t("在 Dock 中常驻图标", "Always show Dock icon"), isOn: $showDock)
                 .onChange(of: showDock) { _ in WindowPolicy.applyDockPreference() }
             Toggle(L.t("登录时启动", "Launch at login"), isOn: $launchAtLogin)
@@ -65,8 +62,8 @@ struct SettingsView: View {
                     NSWorkspace.shared.activateFileViewerSelecting([state.store.rootDir])
                 }
             }
-            Text(L.t("隐私：录音、转写、词库只保存在本机此目录；API Key 在 macOS 钥匙串；无任何遥测。分发 App 或源码不会携带这些数据。",
-                     "Privacy: recordings, transcripts, and the lexicon live only in this local folder; API keys stay in the macOS Keychain; no telemetry. Distributing the app or source carries none of this data."))
+            Text(L.t("所有数据仅存本机，Key 在钥匙串，无遥测。",
+                     "All data stays on this Mac. Keys live in the Keychain. No telemetry."))
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
@@ -79,9 +76,6 @@ struct SettingsView: View {
                            label: L.t("快速听写服务", "Quick Dictation Service"))
             modeServiceRow(mode: .meeting,
                            label: L.t("会议记录服务", "Meeting Service"))
-            Text(L.t("两种模式分别记住自己的服务与模型；在「听写」页切换模式时自动带出。",
-                     "Each mode remembers its own service & model; the Dictate page swaps them as you switch modes."))
-                .font(.caption).foregroundStyle(.secondary)
             Picker(L.t("听写语言", "Dictation Language"), selection: $state.language) {
                 ForEach(LanguageChoice.allCases) { Text($0.label).tag($0) }
             }
@@ -90,10 +84,9 @@ struct SettingsView: View {
             }
             .onChange(of: hotkeyID) { _ in HotKeyManager.shared.applyFromDefaults() }
 
-            Toggle(L.t("听写完成后弹出修正窗（结果仍会先复制）", "Show a review panel after dictation (text is still copied first)"), isOn: $quickReview)
-            Text(L.t("修正窗不抢焦点：不需要改就直接去粘贴，它几秒后自动消失；改了会重新复制并让词典学习。",
-                     "The panel never steals focus — paste right away and it fades, or edit to re-copy and teach the lexicon."))
-                .font(.caption).foregroundStyle(.secondary)
+            Toggle(L.t("听写完成后弹出修正窗", "Show a review panel after dictation"), isOn: $quickReview)
+                .help(L.t("结果仍会先复制；修正窗不抢焦点，改动会重新复制并让词典学习",
+                          "Text is copied first; the panel never steals focus, edits are re-copied and learned"))
             Toggle(L.t("新转写自动应用已学会的修正规则", "Auto-apply learned correction rules"), isOn: $autoApplyRules)
             Toggle(L.t("快速听写复制后自动粘贴到当前输入框", "Auto-paste after quick dictation"), isOn: $autoPaste)
                 .onChange(of: autoPaste) { on in
@@ -132,13 +125,14 @@ struct SettingsView: View {
             Picker(L.t("识别语言", "Recognition Language"), selection: $appleLang) {
                 Text("中文").tag("zh")
                 Text("English").tag("en")
+                Text("Español").tag("es")
+                Text("Français").tag("fr")
+                Text("日本語").tag("ja")
             }
             Toggle(L.t("优先使用离线识别", "Prefer offline recognition"), isOn: $appleOnDevice)
             Text(AppleSpeech.supportsOnDevice(lang: appleLang)
-                 ? L.t("当前语言支持离线识别：免费、隐私、长录音也无需分段。",
-                       "Offline recognition available: free, private, no chunking needed.")
-                 : L.t("当前语言暂不支持离线识别，将使用 Apple 服务器（单段约 1 分钟，长音频会自动切割）。",
-                       "Offline unavailable for this language; Apple's server will be used (~1 min per chunk, auto-split)."))
+                 ? L.t("✓ 当前语言支持离线识别", "✓ Offline recognition available")
+                 : L.t("当前语言将使用 Apple 服务器", "This language uses Apple's server"))
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
@@ -146,11 +140,7 @@ struct SettingsView: View {
     // MARK: AI correction
 
     private var aiSection: some View {
-        Section(L.t("AI 修正（语法与错词校对）", "AI Correction (grammar & wording)")) {
-            Text(L.t("语言模型会带着你的词库整体校对转写文本，原文始终保留。",
-                     "A language model proofreads transcripts with your glossary in mind. The original is always kept."))
-                .font(.caption).foregroundStyle(.secondary)
-
+        Section(L.t("AI 修正", "AI Correction")) {
             Picker(L.t("修正模型", "Correction Model"), selection: $aiProvider) {
                 Text(L.t("Apple 智能（本机，免费）", "Apple Intelligence (on-device, free)")).tag(AICorrector.appleID)
                 ForEach(Providers.cloud) { p in
@@ -170,15 +160,14 @@ struct SettingsView: View {
             } else {
                 AIModelField(providerID: aiProvider)
                 if !Keychain.has(account: aiProvider) {
-                    Text(L.t("该服务还没有 API Key，请在下方「API 密钥」中配置（与转写共用）。",
-                             "No API key for this service yet — add one under API Keys below (shared with transcription)."))
+                    Text(L.t("请在下方「API 密钥」中配置该服务的 Key。", "Add this service's key under API Keys below."))
                         .font(.caption).foregroundStyle(.orange)
                 }
             }
 
             Toggle(L.t("转写完成后自动进行 AI 修正", "Auto-correct after every transcription"), isOn: $aiAuto)
-            Text(L.t("不开启时可在历史详情页手动触发。", "You can always trigger it manually from a session's detail page."))
-                .font(.caption).foregroundStyle(.secondary)
+                .help(L.t("模型会带着你的词库校对，原文始终保留；也可在历史详情页手动触发",
+                          "Proofreads with your glossary; the original is always kept. Also available per-session in History"))
         }
     }
 
@@ -196,8 +185,7 @@ struct SettingsView: View {
 
     private var chunkSection: some View {
         Section(L.t("长音频分段", "Long-Audio Chunking")) {
-            Text(L.t("超长录音在安静处自动切段、逐段转写后按时间戳合并。AssemblyAI 原生支持长音频，无需分段。",
-                     "Long recordings are split at quiet points and merged back with timestamps. AssemblyAI handles long audio natively — no chunking."))
+            Text(L.t("超长录音在安静处切段，按时间戳合并。", "Long audio is split at quiet points and merged with timestamps."))
                 .font(.caption).foregroundStyle(.secondary)
             ForEach(Providers.cloud.filter { $0.id != "assemblyai" }) { provider in
                 ChunkRow(provider: provider)

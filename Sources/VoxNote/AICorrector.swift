@@ -147,6 +147,9 @@ enum AICorrector {
         switch language {
         case "en": langHint = "The text is in English."
         case "zh": langHint = "文本为中文。"
+        case "es": langHint = "The text is in Spanish."
+        case "fr": langHint = "The text is in French."
+        case "ja": langHint = "The text is in Japanese."
         default: langHint = L.t("文本可能是中文、英文或混合。", "The text may be Chinese, English, or mixed.")
         }
         return L.t("""
