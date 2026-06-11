@@ -252,10 +252,10 @@ final class AppState: ObservableObject, @unchecked Sendable {
                     // Optional: AI grammar correction (with glossary)
                     if AICorrector.autoEnabled && AICorrector.isConfigured {
                         processingDetail = L.t("AI 修正中…", "AI correcting…")
-                        if let aiFixed = try? await AICorrector.correct(
+                        if let outcome = try? await AICorrector.correct(
                             text: version.displayText, language: version.language, lexicon: store.lexicon),
-                           !aiFixed.isEmpty, aiFixed != version.displayText {
-                            version.correctedText = aiFixed
+                           outcome.hasChange {
+                            version.correctedText = outcome.text
                             let tag = L.t("AI 修正", "AI corrected")
                             version.note = version.note.map { $0 + "；" + tag } ?? tag
                         }
@@ -336,14 +336,23 @@ final class AppState: ObservableObject, @unchecked Sendable {
             service.progress[sessionID] = .init(done: 1, total: 1, label: L.t("AI 修正中…", "AI correcting…"))
             defer { service.progress[sessionID] = nil }
             do {
-                let fixed = try await AICorrector.correct(
+                let outcome = try await AICorrector.correct(
                     text: version.displayText, language: version.language, lexicon: store.lexicon)
-                if !fixed.isEmpty, fixed != version.displayText {
-                    let tag = L.t("AI 修正", "AI corrected")
-                    store.updateTranscript(sessionID: sessionID, transcriptID: transcriptID) {
-                        $0.correctedText = fixed
-                        $0.note = $0.note.map { n in n.contains(tag) ? n : n + "；" + tag } ?? tag
+                if outcome.hasChange {
+                    var tag = L.t("AI 修正", "AI corrected")
+                    if outcome.skippedChunks > 0 {
+                        tag += L.t("（\(outcome.skippedChunks) 段跳过）", " (\(outcome.skippedChunks) chunk(s) skipped)")
                     }
+                    let finalTag = tag
+                    store.updateTranscript(sessionID: sessionID, transcriptID: transcriptID) {
+                        $0.correctedText = outcome.text
+                        $0.note = $0.note.map { n in n.contains(finalTag) ? n : n + "；" + finalTag } ?? finalTag
+                    }
+                } else if outcome.skippedChunks > 0 {
+                    errorMessage = L.t("AI 修正结果与原文偏离过大或被安全护栏拦截，已保留原文。可重试或在设置中换一个修正模型。",
+                                       "The AI output drifted too far from the original or was blocked by guardrails; the original text was kept. Retry, or switch the correction model in Settings.")
+                } else {
+                    errorMessage = L.t("AI 检查完毕，没有发现需要修正的地方。", "AI found nothing to fix.")
                 }
             } catch {
                 errorMessage = L.t("AI 修正失败：", "AI correction failed: ") + error.localizedDescription
@@ -356,7 +365,11 @@ final class AppState: ObservableObject, @unchecked Sendable {
     private func deliverQuickResult(_ text: String) {
         let final = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !final.isEmpty else {
-            finishQuickHUD(L.t("未识别到内容", "Nothing recognized"), success: false)
+            // Distinguish "no speech" from "no signal at all" — the latter usually means the wrong mic
+            let message = recorder.peakLevel < 0.03
+                ? L.t("没有收到声音，请检查「麦克风」选择", "No sound received — check the Microphone selection")
+                : L.t("未识别到内容", "Nothing recognized")
+            finishQuickHUD(message, success: false)
             return
         }
         let pasteboard = NSPasteboard.general

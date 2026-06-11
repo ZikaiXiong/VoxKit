@@ -44,7 +44,14 @@ final class TranscriptionService: ObservableObject {
             }.value
             progress[session.id] = Progress(done: 0, total: chunks.count)
 
-            let prompt = provider.supportsPrompt ? Learner.hotwordPrompt(store.lexicon) : nil
+            // Whisper-style models follow the script/style of the prompt text, so a
+            // Simplified-Chinese prompt steers Chinese output away from Traditional.
+            var promptParts: [String] = []
+            if provider.supportsPrompt {
+                if language != .en { promptParts.append("以下是普通话的句子，请使用简体中文转写。") }
+                if let hotwords = Learner.hotwordPrompt(store.lexicon) { promptParts.append(hotwords) }
+            }
+            let prompt = promptParts.isEmpty ? nil : promptParts.joined(separator: " ")
             let appleLang = Self.effectiveAppleLang(language)
 
             // 3. Transcribe chunk by chunk, retrying each failed chunk once
@@ -115,11 +122,17 @@ final class TranscriptionService: ObservableObject {
                 progress[session.id] = Progress(done: chunks.count, total: chunks.count,
                                                 label: L.t("AI 修正中…", "AI correcting…"))
                 do {
-                    let aiFixed = try await AICorrector.correct(
+                    let outcome = try await AICorrector.correct(
                         text: version.displayText, language: version.language, lexicon: store.lexicon)
-                    if !aiFixed.isEmpty, aiFixed != version.displayText {
-                        version.correctedText = aiFixed
-                        let tag = L.t("AI 修正", "AI corrected")
+                    if outcome.hasChange {
+                        version.correctedText = outcome.text
+                        var tag = L.t("AI 修正", "AI corrected")
+                        if outcome.skippedChunks > 0 {
+                            tag += L.t("（\(outcome.skippedChunks) 段跳过）", " (\(outcome.skippedChunks) chunk(s) skipped)")
+                        }
+                        version.note = version.note.map { $0 + "；" + tag } ?? tag
+                    } else if outcome.skippedChunks > 0 {
+                        let tag = L.t("AI 修正被跳过", "AI correction skipped")
                         version.note = version.note.map { $0 + "；" + tag } ?? tag
                     }
                 } catch {

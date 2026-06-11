@@ -11,17 +11,21 @@ extension LinearGradient {
 struct LevelMeter: View {
     let level: Float
     var barCount: Int = 21
+    var barWidth: CGFloat = 3.5
+    var spacing: CGFloat = 3
+    var maxBarHeight: CGFloat = 32   // bars bounce between minBarHeight and this with the mic level
+    var minBarHeight: CGFloat = 5
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: spacing) {
             ForEach(0..<barCount, id: \.self) { i in
                 Capsule()
                     .fill(LinearGradient.vox)
-                    .frame(width: 3.5, height: height(for: i))
+                    .frame(width: barWidth, height: height(for: i))
                     .opacity(0.45 + 0.55 * Double(level))
             }
         }
-        .frame(height: 40)
+        .frame(height: maxBarHeight + 8)
         .animation(.easeOut(duration: 0.09), value: level)
     }
 
@@ -29,7 +33,7 @@ struct LevelMeter: View {
         let mid = Double(barCount - 1) / 2
         let envelope = 1.0 - abs(Double(index) - mid) / (mid + 2)
         let wobble = 0.55 + 0.45 * abs(sin(Double(index) * 1.7))
-        return CGFloat(5 + Double(level) * 32 * envelope * wobble)
+        return minBarHeight + CGFloat(Double(level) * envelope * wobble) * maxBarHeight
     }
 }
 
