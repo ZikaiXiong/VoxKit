@@ -56,6 +56,8 @@ struct ReviewView: View {
     @EnvironmentObject var state: AppState
     @State private var editedText = ""
     @State private var countdown: Int? = 12
+    @State private var aiRunning = false
+    @State private var aiStatus: String?
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var original: String { state.reviewTarget?.originalDisplay ?? "" }
@@ -86,12 +88,15 @@ struct ReviewView: View {
                 )
                 .onChange(of: editedText) { _ in countdown = nil }
 
-            HStack {
-                Text(edited
+            HStack(spacing: 10) {
+                aiFixButton
+
+                Text(aiStatus ?? (edited
                      ? L.t("Edits are re-copied and taught to the lexicon", "修改会重新复制，并让词典学习你的改法")
-                     : L.t("You can already ⌘V into your target app", "可直接去目标输入框 ⌘V 粘贴"))
+                     : L.t("You can already ⌘V into your target app", "可直接去目标输入框 ⌘V 粘贴")))
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(aiStatus == nil ? .tertiary : .secondary)
+                    .lineLimit(1)
                 Spacer()
                 Button(L.t("Dismiss", "放弃")) {
                     state.finishReview(editedText: nil)
@@ -136,5 +141,55 @@ struct ReviewView: View {
             return base + " (\(c))"
         }
         return base
+    }
+
+    /// One-click AI proofread of the current text, using the user's lexicon
+    private var aiFixButton: some View {
+        Button {
+            runAIFix()
+        } label: {
+            HStack(spacing: 4) {
+                if aiRunning {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Image(systemName: "wand.and.stars")
+                }
+                Text(L.t("AI Fix", "AI 修正"))
+            }
+        }
+        .disabled(aiRunning || editedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        .keyboardShortcut("j", modifiers: .command)
+        .help(AICorrector.isConfigured
+              ? L.t("Proofread with \(AICorrector.configuredLabel) using your lexicon (⌘J)",
+                    "用 \(AICorrector.configuredLabel) 修正，会参考你的词库（⌘J）")
+              : L.t("Set up under Settings → AI Correction first", "先到「设置 → AI 修正」选择模型"))
+    }
+
+    private func runAIFix() {
+        countdown = nil
+        guard AICorrector.isConfigured else {
+            aiStatus = L.t("Not configured — see Settings → AI Correction", "未配置 — 见 设置 → AI 修正")
+            return
+        }
+        aiRunning = true
+        aiStatus = nil
+        let text = editedText
+        let language = state.reviewTarget.flatMap { state.store.session($0.sessionID)?.language } ?? "auto"
+        Task {
+            defer { aiRunning = false }
+            do {
+                let outcome = try await AICorrector.correct(text: text, language: language, lexicon: state.store.lexicon)
+                if outcome.hasChange {
+                    editedText = outcome.text
+                    aiStatus = nil
+                } else if outcome.skippedChunks > 0 {
+                    aiStatus = L.t("AI output drifted too far — kept your text", "AI 结果偏离过大，已保留原文")
+                } else {
+                    aiStatus = L.t("Nothing to fix", "没有需要修正的地方")
+                }
+            } catch {
+                aiStatus = error.localizedDescription
+            }
+        }
     }
 }
