@@ -65,7 +65,7 @@ enum CloudTranscriber {
                let msg = err["message"] as? String {
                 message = msg
             }
-            throw VoxError.message("\(provider.displayName) \(http.statusCode)：\(String(message.prefix(300)))")
+            throw VoxError.message("\(provider.displayName) \(http.statusCode): \(String(message.prefix(300)))")
         }
         if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let text = obj["text"] as? String {

@@ -31,15 +31,13 @@ Currently in 0.x — expect rough edges.
   points, transcribed chunk by chunk, and merged back with timestamps
 - **Recordings are never wasted**: everything is kept in a local library; re-run any
   recording through a different model and compare versions side by side
-- **Two-layer correction system**
-  1. *Pair learning* — edit a transcript, hit "Save & Learn", and a fix seen twice becomes
-     a rule: future transcripts get auto-corrected, with one-click suggestions (the
-     original text is always preserved)
-  2. *AI proofreading* — mis-recognitions vary wildly but the right words are stable, so
-     VoxKit can hand the transcript *plus your glossary* (hotwords + known corrections)
-     to a language model for context-aware proofreading: Apple Intelligence on-device
-     (macOS 26+, free) or any OpenAI-compatible chat model; run it automatically after
-     every transcription or manually per session
+- **Self-learning lexicon + AI proofreading** — mis-recognitions vary wildly but the
+  right words are stable, so VoxKit learns *vocabulary*, not brittle replacement rules:
+  words you type while correcting a transcript become hotwords, and the transcript plus
+  that glossary goes to a language model for context-aware proofreading (replace only
+  where the original reads wrong). Apple Intelligence on-device or any OpenAI-compatible
+  chat model; automatic after every transcription or manual per session — the original
+  text is always preserved
 - **Hotword injection**: your glossary is passed as a prompt to transcription models that
   support it, so proper nouns come out right at the source
 
@@ -92,7 +90,7 @@ Everything stays on your Mac:
 
 - Recordings, transcripts, the lexicon, and generated speech live in
   `~/Library/Application Support/VoxKit/` — `sessions.json` (history), `lexicon.json`
-  (learned corrections & hotwords), `Audio/` (recordings), `Speech/` (generated TTS audio)
+  (your vocabulary), `Audio/` (recordings), `Speech/` (generated TTS audio)
 - API keys are stored in the **macOS Keychain**, never in files
 - No telemetry, no analytics, no network calls other than the transcription/TTS
   requests you explicitly trigger

@@ -19,6 +19,8 @@ final class AudioRecorder: ObservableObject {
     private(set) var peakLevel: Float = 0
 
     private var engine: AVAudioEngine?
+    /// Guards file/converter state shared between the tap (audio thread) and teardown (main thread)
+    private let ioLock = NSLock()
     private var file: AVAudioFile?
     private var converter: AVAudioConverter?
     private var lastInputFormat: AVAudioFormat?
@@ -148,9 +150,11 @@ final class AudioRecorder: ObservableObject {
         engine?.inputNode.removeTap(onBus: 0)
         engine?.stop()
         engine = nil
+        ioLock.lock()
         file = nil       // releasing finalizes the WAV header
         converter = nil
         lastInputFormat = nil
+        ioLock.unlock()
     }
 
     // Audio-capture thread
@@ -173,10 +177,14 @@ final class AudioRecorder: ObservableObject {
             }
         }
 
+        ioLock.lock()
         if converter == nil || lastInputFormat != buffer.format {
             converter = AVAudioConverter(from: buffer.format, to: outFormat)
             lastInputFormat = buffer.format
         }
+        let converter = self.converter
+        let file = self.file
+        ioLock.unlock()
         if let converter, let file {
             let ratio = outFormat.sampleRate / buffer.format.sampleRate
             let capacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 64

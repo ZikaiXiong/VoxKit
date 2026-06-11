@@ -10,8 +10,6 @@ struct LexiconView: View {
 
 private struct LexiconContent: View {
     @ObservedObject var store: Store
-    @State private var newOriginal = ""
-    @State private var newReplacement = ""
     @State private var newHotword = ""
     @State private var candidates: [(String, Int)] = []
 
@@ -20,12 +18,11 @@ private struct LexiconContent: View {
             VStack(alignment: .leading, spacing: 18) {
                 Text(L.t("Lexicon", "词典"))
                     .font(.title2.weight(.semibold))
-                Text(L.t("A fix seen twice becomes active, powering auto-correction and hotwords.",
-                         "出现 2 次的改法自动生效，用于自动修正与热词。"))
+                Text(L.t("Your vocabulary — injected into transcription and AI correction. Words you type while correcting transcripts are added automatically.",
+                         "你的词库——注入转写与 AI 修正。修正文本时改出的新词会自动加入。"))
                     .font(.callout)
                     .foregroundStyle(.secondary)
 
-                rulesSection
                 hotwordsSection
                 candidatesSection
             }
@@ -34,80 +31,6 @@ private struct LexiconContent: View {
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .onAppear { candidates = store.frequentTokenCandidates() }
-    }
-
-    // MARK: Correction rules
-
-    private var rulesSection: some View {
-        Card {
-            VStack(alignment: .leading, spacing: 10) {
-                Label(L.t("Correction rules (wrong → right)", "修正规则（识别错 → 应该是）"), systemImage: "wand.and.stars")
-                    .font(.headline)
-
-                HStack(spacing: 8) {
-                    TextField(L.t("Recognized as…", "识别成了…"), text: $newOriginal)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 160)
-                    Image(systemName: "arrow.right").foregroundStyle(.secondary)
-                    TextField(L.t("Should be…", "应该是…"), text: $newReplacement)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 160)
-                    Button(L.t("Add", "添加")) {
-                        store.addManualRule(original: newOriginal, replacement: newReplacement)
-                        newOriginal = ""; newReplacement = ""
-                    }
-                    .disabled(newOriginal.trimmingCharacters(in: .whitespaces).isEmpty
-                              || newReplacement.trimmingCharacters(in: .whitespaces).isEmpty)
-                    Spacer()
-                }
-
-                if store.lexicon.rules.isEmpty {
-                    Text(L.t("No rules yet — edit a transcript under History and click “Save & Learn”.",
-                             "还没有规则——在「历史」里改完文本点「保存修正并学习」即可积累。"))
-                        .captionStyle()
-                        .padding(.vertical, 8)
-                } else {
-                    VStack(spacing: 0) {
-                        ForEach(store.lexicon.rules) { rule in
-                            HStack(spacing: 10) {
-                                Toggle("", isOn: Binding(
-                                    get: { rule.enabled },
-                                    set: { _ in store.toggleRule(rule) }
-                                ))
-                                .labelsHidden()
-                                .toggleStyle(.switch)
-                                .controlSize(.mini)
-
-                                Text(rule.original)
-                                    .strikethrough(color: .secondary)
-                                    .foregroundStyle(.secondary)
-                                Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
-                                Text(rule.replacement).fontWeight(.medium)
-
-                                if rule.isManual {
-                                    TagChip(text: L.t("Manual", "手动"), color: .blue)
-                                } else if rule.isActive {
-                                    TagChip(text: L.t("Active · learned ×\(rule.count)", "已生效 · 学习 \(rule.count) 次"), color: .green)
-                                } else {
-                                    TagChip(text: L.t("Active after \(max(0, 2 - rule.count)) more", "再出现 \(max(0, 2 - rule.count)) 次后生效"), color: .orange)
-                                }
-
-                                Spacer()
-
-                                Button {
-                                    store.deleteRule(rule)
-                                } label: {
-                                    Image(systemName: "trash").foregroundStyle(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.vertical, 7)
-                            Divider()
-                        }
-                    }
-                }
-            }
-        }
     }
 
     // MARK: Hotwords

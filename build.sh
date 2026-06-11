@@ -1,11 +1,11 @@
 #!/bin/bash
 # Build and package VoxKit.app
-# Compiles with swiftc directly (this machine's CLT has a broken SwiftPM manifest library; switch back to swift build once full Xcode is installed)
+# Compiles with swiftc directly so only the Xcode Command Line Tools are required
 set -euo pipefail
 cd "$(dirname "$0")"
 
 ARCH="$(uname -m)"
-echo "▸ 编译 (release, ${ARCH})…"
+echo "▸ Building (release, ${ARCH})…"
 mkdir -p .build
 
 swiftc -O -parse-as-library -swift-version 5 \
@@ -23,7 +23,7 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 if [ -f Resources/AppIcon.icns ]; then
   cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 fi
-# Localized display name & permission prompts (Finder shows 声记 on Chinese systems)
+# Localized display names and permission prompts (per-language lproj bundles)
 for lproj in Resources/*.lproj; do
   [ -d "$lproj" ] && cp -R "$lproj" "$APP/Contents/Resources/"
 done
@@ -32,18 +32,18 @@ done
 #   SIGN_ID="Developer ID Application: Your Name (TEAMID)" ./build.sh --zip
 if [ -n "${SIGN_ID:-}" ]; then
   codesign --force --deep --options runtime --sign "$SIGN_ID" "$APP"
-  echo "▸ 已用 Developer ID 签名：$SIGN_ID"
+  echo "▸ Signed with Developer ID: $SIGN_ID"
 else
   codesign --force --deep --sign - "$APP"
 fi
 
-echo "✅ 完成：$PWD/$APP"
-echo "   首次运行：open \"$PWD/$APP\"（系统会请求麦克风/语音识别权限）"
+echo "✅ Done: $PWD/$APP"
+echo "   First run: open \"$PWD/$APP\" (macOS will ask for microphone/speech permissions)"
 
 # --zip: build the distribution archive (see DISTRIBUTION.md)
 if [[ "${1:-}" == "--zip" ]]; then
   VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Resources/Info.plist)
   ZIP="dist/VoxKit-${VERSION}.zip"
   ditto -c -k --keepParent "$APP" "$ZIP"
-  echo "📦 分发包：$PWD/$ZIP"
+  echo "📦 Distributable: $PWD/$ZIP"
 fi

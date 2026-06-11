@@ -84,23 +84,12 @@ struct Session: Codable, Identifiable, Hashable {
     }
 }
 
-// MARK: - Lexicon (correction rules / hotwords)
+// MARK: - Lexicon (user vocabulary)
 
-struct CorrectionRule: Codable, Identifiable, Hashable {
-    var id = UUID()
-    var original: String
-    var replacement: String
-    var count: Int = 1
-    var enabled: Bool = true
-    var isManual: Bool = false
-    var updated = Date()
-
-    /// Manually added rules take effect immediately; learned rules activate after 2 occurrences
-    var isActive: Bool { enabled && (isManual || count >= 2) }
-}
-
+/// The user's vocabulary: proper nouns, technical terms, frequent words.
+/// Injected into transcription prompts and AI correction so these terms come out
+/// spelled right. Learned from saved corrections and manual additions.
 struct LexiconData: Codable {
-    var rules: [CorrectionRule] = []
     var hotwords: [String] = []
 }
 

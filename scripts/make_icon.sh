@@ -24,4 +24,4 @@ sips -z 512 512   "$PNG" --out "$SET/icon_512x512.png"    >/dev/null
 cp "$PNG" "$SET/icon_512x512@2x.png"
 
 iconutil -c icns "$SET" -o AppIcon.icns
-echo "✅ AppIcon.icns 已更新"
+echo "✅ AppIcon.icns updated"

@@ -46,7 +46,7 @@ final class HotKeyManager {
             return noErr
         }, 1, &eventType, selfPtr, &handlerRef)
 
-        let hotKeyID = EventHotKeyID(signature: OSType(0x564F584E), id: 1)   // 'VOXN'
+        let hotKeyID = EventHotKeyID(signature: OSType(0x564F584B), id: 1)   // 'VOXK'
         RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
     }
 
