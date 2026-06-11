@@ -458,7 +458,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
         let final = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !final.isEmpty else {
             // Distinguish "no speech" from "no signal at all" — the latter usually means the wrong mic
-            let message = recorder.peakLevel < 0.03
+            let message = recorder.peakLevel < 0.12
                 ? L.t("No sound received — check the Microphone selection", "没有收到声音，请检查「麦克风」选择")
                 : L.t("Nothing recognized", "未识别到内容")
             finishQuickHUD(message, success: false)
