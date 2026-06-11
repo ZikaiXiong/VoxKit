@@ -7,6 +7,8 @@ import AudioToolbox
 final class AudioRecorder: ObservableObject {
     @Published private(set) var level: Float = 0
     @Published private(set) var elapsed: TimeInterval = 0
+    /// Highest level seen in this recording — near-zero means the mic captured no sound
+    private(set) var peakLevel: Float = 0
 
     private var engine: AVAudioEngine?
     private var file: AVAudioFile?
@@ -64,6 +66,7 @@ final class AudioRecorder: ObservableObject {
         engine.prepare()
         try engine.start()
         self.engine = engine
+        peakLevel = 0
         DispatchQueue.main.async { self.level = 0; self.elapsed = 0 }
     }
 
@@ -137,6 +140,7 @@ final class AudioRecorder: ObservableObject {
             let lv = min(1, rms * 5)
             DispatchQueue.main.async {
                 self.level = lv
+                self.peakLevel = max(self.peakLevel, lv)
                 self.elapsed = seconds
             }
         }

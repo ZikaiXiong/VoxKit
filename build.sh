@@ -8,32 +8,8 @@ ARCH="$(uname -m)"
 echo "▸ 编译 (release, ${ARCH})…"
 mkdir -p .build
 
-# A CLT update left behind a stale swift/module.modulemap that re-defines the SwiftBridging
-# module (already defined in bridging.modulemap), breaking every build; a VFS overlay shadows the stale file with an empty one.
-# (No side effects on healthy machines. Permanent fix:
-#   sudo rm /Library/Developer/CommandLineTools/usr/include/swift/module.modulemap
-# once deleted, this block and the -vfsoverlay line passed to swiftc below are optional and can be removed.)
-VFSDIR="$PWD/.build/cltfix"
-mkdir -p "$VFSDIR"
-printf '// shadowed stale CLT modulemap (SwiftBridging is defined in bridging.modulemap)\n' > "$VFSDIR/empty.modulemap"
-cat > "$VFSDIR/overlay.yaml" <<EOF
-{
-  "version": 0,
-  "roots": [
-    {
-      "type": "directory",
-      "name": "/Library/Developer/CommandLineTools/usr/include/swift",
-      "contents": [
-        { "type": "file", "name": "module.modulemap", "external-contents": "$VFSDIR/empty.modulemap" }
-      ]
-    }
-  ]
-}
-EOF
-
 swiftc -O -parse-as-library -swift-version 5 \
   -target "${ARCH}-apple-macos13.0" \
-  -Xfrontend -vfsoverlay -Xfrontend "$VFSDIR/overlay.yaml" \
   -module-name VoxNote \
   Sources/VoxNote/*.swift \
   -o .build/VoxNote

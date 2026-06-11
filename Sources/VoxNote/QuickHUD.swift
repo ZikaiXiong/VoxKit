@@ -56,7 +56,6 @@ struct QuickHUDView: View {
 private struct HUDContent: View {
     @ObservedObject var state: AppState
     @ObservedObject var recorder: AudioRecorder
-    @State private var pulse = false
 
     var body: some View {
         HStack(spacing: 14) {
@@ -68,6 +67,11 @@ private struct HUDContent: View {
                         .font(.callout.weight(.semibold))
                         .lineLimit(1)
                     Spacer()
+                    if state.phase == .recording {
+                        // Live mic level — instantly shows whether sound is being picked up
+                        LevelMeter(level: recorder.level, barCount: 9, barWidth: 2.5,
+                                   spacing: 2, maxBarHeight: 12, minBarHeight: 2.5)
+                    }
                     if state.phase == .recording || state.phase == .paused {
                         Text(Format.mmss(recorder.elapsed))
                             .font(.callout.monospacedDigit())
@@ -135,16 +139,22 @@ private struct HUDContent: View {
 
     private var statusIcon: some View {
         ZStack {
+            // Outer ring breathes with the mic level while recording
+            Circle()
+                .stroke(LinearGradient.vox, lineWidth: 2)
+                .frame(width: 46, height: 46)
+                .scaleEffect(state.phase == .recording ? 1 + CGFloat(min(recorder.level, 1)) * 0.45 : 1)
+                .opacity(state.phase == .recording ? Double(0.7 - min(recorder.level, 1) * 0.5) : 0)
+                .animation(.easeOut(duration: 0.12), value: recorder.level)
             Circle()
                 .fill(LinearGradient.vox)
                 .frame(width: 46, height: 46)
-                .scaleEffect(pulse && state.phase == .recording ? 1.08 : 1)
-                .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulse)
+                .scaleEffect(state.phase == .recording ? 1 + CGFloat(min(recorder.level, 1)) * 0.18 : 1)
+                .animation(.easeOut(duration: 0.1), value: recorder.level)
             Image(systemName: iconName)
                 .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(.white)
         }
-        .onAppear { pulse = true }
     }
 
     private var iconName: String {
