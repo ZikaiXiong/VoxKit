@@ -50,7 +50,7 @@ enum Providers {
     static let assemblyai = Provider(
         id: "assemblyai", name: "AssemblyAI", needsKey: true,
         defaultBaseURL: "https://api.assemblyai.com",
-        models: ["universal-3-pro", "universal"],
+        models: ["universal-3-pro", "universal-2"],
         supportsPrompt: false, defaultChunkSeconds: 14400, maxUploadMB: 2048,
         icon: "person.2.wave.2.fill",
         keyHint: "AssemblyAI key — meeting-grade transcription with speaker diarization.")

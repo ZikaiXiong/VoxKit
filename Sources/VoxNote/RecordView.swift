@@ -214,6 +214,8 @@ private struct RecordContent: View {
                     }
                     .fixedSize()
 
+                    ModelGuideButton(kind: .transcription)
+
                     Spacer()
 
                     if AICorrector.autoEnabled && AICorrector.isConfigured {

@@ -96,6 +96,8 @@ private struct SpeakContent: View {
 
                     voiceControl
 
+                    ModelGuideButton(kind: .tts)
+
                     Spacer()
 
                     keyStatus
