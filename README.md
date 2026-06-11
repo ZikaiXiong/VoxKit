@@ -84,10 +84,20 @@ notarization, and shipping to other people.
 Recordings are stored as 16 kHz mono WAV (~1.9 MB/min), so a 10-minute chunk stays
 far below the 25 MB caps.
 
-## Data location
+## Privacy & data location
 
-`~/Library/Application Support/VoxNote/` — `sessions.json` (history), `lexicon.json`
-(learned corrections & hotwords), `Audio/` (recordings), `Speech/` (generated TTS audio).
+Everything stays on your Mac:
+
+- Recordings, transcripts, the lexicon, and generated speech live in
+  `~/Library/Application Support/VoxNote/` — `sessions.json` (history), `lexicon.json`
+  (learned corrections & hotwords), `Audio/` (recordings), `Speech/` (generated TTS audio)
+- API keys are stored in the **macOS Keychain**, never in files
+- No telemetry, no analytics, no network calls other than the transcription/TTS
+  requests you explicitly trigger
+
+Because all personal data lives outside both the app bundle and this repository,
+**distributing the built `.app` or publishing this source code never carries your
+recordings, lexicon, or keys**. Deleting the folder above wipes everything.
 
 ## Requirements
 

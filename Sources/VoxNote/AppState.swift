@@ -52,6 +52,14 @@ final class AppState: ObservableObject, @unchecked Sendable {
     /// Fine-grained status text while processing ("Transcribing…" / "AI correcting…")
     @Published var processingDetail: String?
 
+    /// Quick-dictation result currently shown in the review panel
+    struct ReviewTarget {
+        let sessionID: UUID
+        let transcriptID: UUID
+        let originalDisplay: String
+    }
+    @Published var reviewTarget: ReviewTarget?
+
     /// UI language preference: "system" / "zh" / "en"
     @Published var uiLangPref: String {
         didSet {
@@ -219,6 +227,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
 
     func startRecording(_ mode: TranscriptionMode) async {
         guard phase == .idle || isDonePhase else { return }
+        // A lingering review panel from the previous dictation closes silently
+        if reviewTarget != nil { finishReview(editedText: nil) }
         guard await AudioRecorder.ensurePermission() else {
             errorMessage = L.t("未获得麦克风权限：请在「系统设置 → 隐私与安全性 → 麦克风」中允许「声记」。",
                                "Microphone access denied: allow VoxNote under System Settings → Privacy & Security → Microphone.")
@@ -345,7 +355,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
                         processingDetail = nil
                     }
                     store.appendTranscript(version, to: session.id)
-                    deliverQuickResult(version.displayText)
+                    deliverQuickResult(version.displayText, sessionID: session.id, transcriptID: version.id)
                     delivered = true
                 }
             }
@@ -355,7 +365,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
                 let version = await service.transcribe(session: session, provider: activeProvider, model: activeModel,
                                                        language: language, store: store)
                 if let version {
-                    deliverQuickResult(version.displayText)
+                    deliverQuickResult(version.displayText, sessionID: session.id, transcriptID: version.id)
                 } else {
                     finishQuickHUD(L.t("转写失败，录音已保存到历史", "Failed — audio saved to History"), success: false)
                 }
@@ -445,7 +455,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
 
     // MARK: Quick Dictation wrap-up
 
-    private func deliverQuickResult(_ text: String) {
+    private func deliverQuickResult(_ text: String, sessionID: UUID? = nil, transcriptID: UUID? = nil) {
         let final = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !final.isEmpty else {
             // Distinguish "no speech" from "no signal at all" — the latter usually means the wrong mic
@@ -461,7 +471,42 @@ final class AppState: ObservableObject, @unchecked Sendable {
         if UserDefaults.standard.bool(forKey: "autoPaste") {
             Paster.pasteToFrontApp()
         }
-        finishQuickHUD(L.t("已复制（\(final.count) 字）", "Copied (\(final.count) chars)"), success: true)
+
+        // Optional review panel: the text is already copied; the panel offers a
+        // chance to fix it (re-copied + lexicon learns) without leaving the flow.
+        let reviewEnabled = (UserDefaults.standard.object(forKey: "quickReview") as? Bool) ?? true
+        if reviewEnabled, let sessionID, let transcriptID {
+            phase = .idle
+            HUDController.shared.hide()
+            reviewTarget = ReviewTarget(sessionID: sessionID, transcriptID: transcriptID, originalDisplay: final)
+            ReviewPanelController.shared.show()
+        } else {
+            finishQuickHUD(L.t("已复制（\(final.count) 字）", "Copied (\(final.count) chars)"), success: true)
+        }
+    }
+
+    /// Closes the review panel; a non-nil `editedText` means the user changed the
+    /// text — re-copy it, store it as the corrected version, and learn the fixes.
+    func finishReview(editedText: String?) {
+        defer {
+            reviewTarget = nil
+            ReviewPanelController.shared.hide()
+        }
+        guard let target = reviewTarget,
+              let edited = editedText?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !edited.isEmpty, edited != target.originalDisplay else { return }
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(edited, forType: .string)
+
+        store.updateTranscript(sessionID: target.sessionID, transcriptID: target.transcriptID) {
+            $0.correctedText = edited
+        }
+        if let session = store.session(target.sessionID),
+           let version = session.transcripts.first(where: { $0.id == target.transcriptID }) {
+            store.learn(original: version.originalText, corrected: edited)
+        }
     }
 
     private func finishQuickHUD(_ message: String, success: Bool) {
