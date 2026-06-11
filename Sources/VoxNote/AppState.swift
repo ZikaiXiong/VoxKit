@@ -3,11 +3,12 @@ import AVFoundation
 import AppKit
 
 enum MainPage: String, CaseIterable, Identifiable {
-    case record, history, lexicon, settings
+    case record, speak, history, lexicon, settings
     var id: String { rawValue }
     var title: String {
         switch self {
         case .record: return L.t("听写", "Dictate")
+        case .speak: return L.t("朗读", "Speak")
         case .history: return L.t("历史", "History")
         case .lexicon: return L.t("词典", "Lexicon")
         case .settings: return L.t("设置", "Settings")
@@ -16,6 +17,7 @@ enum MainPage: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .record: return "mic.fill"
+        case .speak: return "speaker.wave.2.fill"
         case .history: return "clock.fill"
         case .lexicon: return "character.book.closed.fill"
         case .settings: return "gearshape.fill"

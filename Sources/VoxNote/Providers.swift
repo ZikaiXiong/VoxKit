@@ -46,6 +46,15 @@ enum Providers {
         supportsPrompt: false, defaultChunkSeconds: 300, maxUploadMB: 25,
         icon: "cloud.fill", keyHint: "在 siliconflow.cn 获取 API Key，国内直连，中文效果好。")
 
+    // Async REST API (upload → create → poll); handles hours-long audio natively, so no chunking
+    static let assemblyai = Provider(
+        id: "assemblyai", name: "AssemblyAI", needsKey: true,
+        defaultBaseURL: "https://api.assemblyai.com",
+        models: ["universal-3-pro", "universal"],
+        supportsPrompt: false, defaultChunkSeconds: 14400, maxUploadMB: 2048,
+        icon: "person.2.wave.2.fill",
+        keyHint: "AssemblyAI key — meeting-grade transcription with speaker diarization.")
+
     static let custom = Provider(
         id: "custom", name: "自定义（OpenAI 兼容）", needsKey: true,
         defaultBaseURL: "",
@@ -53,8 +62,8 @@ enum Providers {
         supportsPrompt: true, defaultChunkSeconds: 600, maxUploadMB: 25,
         icon: "wrench.and.screwdriver.fill", keyHint: "任何 OpenAI 兼容的 /audio/transcriptions 服务，在「高级」里填地址和模型名。")
 
-    static let all: [Provider] = [appleLocal, openai, groq, siliconflow, custom]
-    static let cloud: [Provider] = [openai, groq, siliconflow, custom]
+    static let all: [Provider] = [appleLocal, openai, groq, siliconflow, assemblyai, custom]
+    static let cloud: [Provider] = [openai, groq, siliconflow, assemblyai, custom]
 
     static func by(_ id: String) -> Provider {
         all.first { $0.id == id } ?? appleLocal

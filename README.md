@@ -14,7 +14,12 @@ Interface in English and 中文. By [Zikai Xiong](https://zikaixiong.github.io).
   - *Meeting*: long-form recording with pause/resume; transcribes in the background and
     presents the result with timestamps
 - **Multiple engines**: Apple on-device recognition (free/offline), OpenAI, Groq,
-  SiliconFlow, or any OpenAI-compatible endpoint — Chinese and English alike
+  SiliconFlow, AssemblyAI, or any OpenAI-compatible endpoint — Chinese and English alike
+- **Speaker diarization**: choose AssemblyAI for meetings and get a transcript split by
+  speaker (`[02:15] Speaker A: …`); hours-long audio is handled natively without chunking
+- **Text-to-speech**: a dedicated Speak page turns text into audio — system voices
+  (free/offline), OpenAI / Groq / SiliconFlow TTS models, with voice & speed options;
+  generated audio is auto-saved and can optionally play right away
 - **Microphone picker**: choose your input source right on the record page; newly
   plugged-in mics appear automatically, unplugged ones fall back to the system default
 - **Drag & drop import**: drop audio files (wav/mp3/m4a/aac/flac/aiff/caf) onto the
@@ -74,6 +79,7 @@ notarization, and shipping to other people.
 | OpenAI | gpt-4o(-mini)-transcribe, whisper-1 | 25 MB | 10 min |
 | Groq | whisper-large-v3(-turbo) | 25 MB | 10 min |
 | SiliconFlow | SenseVoiceSmall | 25 MB | 5 min |
+| AssemblyAI | universal-3-pro (+ diarization) | ~2 GB | no chunking needed |
 
 Recordings are stored as 16 kHz mono WAV (~1.9 MB/min), so a 10-minute chunk stays
 far below the 25 MB caps.
@@ -81,7 +87,7 @@ far below the 25 MB caps.
 ## Data location
 
 `~/Library/Application Support/VoxNote/` — `sessions.json` (history), `lexicon.json`
-(learned corrections & hotwords), `Audio/` (recordings).
+(learned corrections & hotwords), `Audio/` (recordings), `Speech/` (generated TTS audio).
 
 ## Requirements
 
@@ -92,7 +98,7 @@ far below the 25 MB caps.
 ## Roadmap
 
 - System-audio capture (the other side of a meeting) — currently records the microphone
-- Speaker diarization, automatic summaries
+- Speaker identification (mapping Speaker A/B to real names) and automatic summaries
 - Silence auto-stop (VAD)
 
 ## License

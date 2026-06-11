@@ -39,6 +39,7 @@ extension Provider {
         case "openai": return "OpenAI"
         case "groq": return "Groq"
         case "siliconflow": return L.t("硅基流动 SiliconFlow", "SiliconFlow")
+        case "assemblyai": return "AssemblyAI"
         case "custom": return L.t("自定义（OpenAI 兼容）", "Custom (OpenAI-compatible)")
         default: return name
         }
@@ -58,6 +59,9 @@ extension Provider {
         case "siliconflow":
             return L.t("在 siliconflow.cn 获取 API Key，国内直连，中文效果好。",
                        "Get an API key at siliconflow.cn. Great for Chinese.")
+        case "assemblyai":
+            return L.t("在 assemblyai.com 获取 Key。会议级转写：原生支持数小时长音频（无需分段），可输出「说话人 A / B」分离稿，约 $0.23/小时。",
+                       "Get a key at assemblyai.com. Meeting-grade: handles hours-long audio natively (no chunking) and outputs Speaker A/B diarized transcripts, ~$0.23/hour.")
         case "custom":
             return L.t("任何 OpenAI 兼容的 /audio/transcriptions 服务，在「高级」里填地址和模型名。",
                        "Any OpenAI-compatible /audio/transcriptions service. Set URL & models under Advanced.")
