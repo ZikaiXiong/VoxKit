@@ -98,6 +98,24 @@ struct LexiconData: Codable {
     var hotwords: [String] = []
 }
 
+// MARK: - Generated speech (text-to-speech)
+
+struct SpeechItem: Codable, Identifiable, Hashable {
+    var id = UUID()
+    var date = Date()
+    var text: String
+    var providerID: String
+    var model: String
+    var voice: String
+    var fileName: String
+    var duration: TimeInterval
+
+    var preview: String {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.count > 80 ? String(t.prefix(80)) + "…" : t
+    }
+}
+
 // MARK: - Formatting helpers
 
 enum Format {

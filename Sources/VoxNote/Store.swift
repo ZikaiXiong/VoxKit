@@ -6,10 +6,12 @@ import AVFoundation
 @MainActor
 final class Store: ObservableObject {
     @Published private(set) var sessions: [Session] = []
+    @Published private(set) var speechItems: [SpeechItem] = []
     @Published var lexicon = LexiconData()
 
     let rootDir: URL
     let audioDir: URL
+    let speechDir: URL
     private var saveTask: Task<Void, Never>?
 
     init() {
@@ -17,12 +19,15 @@ final class Store: ObservableObject {
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
         rootDir = base.appendingPathComponent("VoxNote", isDirectory: true)
         audioDir = rootDir.appendingPathComponent("Audio", isDirectory: true)
+        speechDir = rootDir.appendingPathComponent("Speech", isDirectory: true)
         try? FileManager.default.createDirectory(at: audioDir, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: speechDir, withIntermediateDirectories: true)
         load()
     }
 
     private var sessionsFile: URL { rootDir.appendingPathComponent("sessions.json") }
     private var lexiconFile: URL { rootDir.appendingPathComponent("lexicon.json") }
+    private var speechFile: URL { rootDir.appendingPathComponent("speech.json") }
 
     private func load() {
         if let data = try? Data(contentsOf: sessionsFile),
@@ -32,6 +37,10 @@ final class Store: ObservableObject {
         if let data = try? Data(contentsOf: lexiconFile),
            let decoded = try? JSONDecoder().decode(LexiconData.self, from: data) {
             lexicon = decoded
+        }
+        if let data = try? Data(contentsOf: speechFile),
+           let decoded = try? JSONDecoder().decode([SpeechItem].self, from: data) {
+            speechItems = decoded
         }
     }
 
@@ -49,6 +58,24 @@ final class Store: ObservableObject {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         if let data = try? encoder.encode(sessions) { try? data.write(to: sessionsFile, options: .atomic) }
         if let data = try? encoder.encode(lexicon) { try? data.write(to: lexiconFile, options: .atomic) }
+        if let data = try? encoder.encode(speechItems) { try? data.write(to: speechFile, options: .atomic) }
+    }
+
+    // MARK: Generated speech
+
+    func speechURL(for item: SpeechItem) -> URL {
+        speechDir.appendingPathComponent(item.fileName)
+    }
+
+    func addSpeech(_ item: SpeechItem) {
+        speechItems.insert(item, at: 0)
+        scheduleSave()
+    }
+
+    func deleteSpeech(_ item: SpeechItem) {
+        try? FileManager.default.removeItem(at: speechURL(for: item))
+        speechItems.removeAll { $0.id == item.id }
+        scheduleSave()
     }
 
     // MARK: Audio files

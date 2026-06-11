@@ -22,6 +22,7 @@ struct MainWindow: View {
             Group {
                 switch state.selectedPage ?? .record {
                 case .record: RecordView()
+                case .speak: SpeakView()
                 case .history: HistoryView()
                 case .lexicon: LexiconView()
                 case .settings: SettingsView()

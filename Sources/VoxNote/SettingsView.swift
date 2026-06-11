@@ -174,10 +174,10 @@ struct SettingsView: View {
 
     private var chunkSection: some View {
         Section(L.t("长音频分段", "Long-Audio Chunking")) {
-            Text(L.t("超长录音在安静处自动切段、逐段转写后按时间戳合并。",
-                     "Long recordings are split at quiet points and merged back with timestamps."))
+            Text(L.t("超长录音在安静处自动切段、逐段转写后按时间戳合并。AssemblyAI 原生支持长音频，无需分段。",
+                     "Long recordings are split at quiet points and merged back with timestamps. AssemblyAI handles long audio natively — no chunking."))
                 .font(.caption).foregroundStyle(.secondary)
-            ForEach(Providers.cloud) { provider in
+            ForEach(Providers.cloud.filter { $0.id != "assemblyai" }) { provider in
                 ChunkRow(provider: provider)
             }
         }
@@ -252,6 +252,7 @@ private struct ProviderKeyRow: View {
     @State private var key = ""
     @State private var saved = false
     @State private var baseURL = ""
+    @State private var diarize = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -279,6 +280,13 @@ private struct ProviderKeyRow: View {
                     }
                 }
             }
+            if provider.id == "assemblyai" {
+                Toggle(L.t("说话人分离（输出「说话人 A / B」，+$0.02/小时）",
+                           "Speaker diarization (outputs Speaker A/B, +$0.02/hr)"), isOn: $diarize)
+                    .onChange(of: diarize) { v in
+                        UserDefaults.standard.set(v, forKey: "assemblyai.diarize")
+                    }
+            }
             DisclosureGroup(L.t("高级", "Advanced")) {
                 VStack(alignment: .leading, spacing: 6) {
                     TextField(L.t("API 地址（留空用默认：\(provider.defaultBaseURL.isEmpty ? "无" : provider.defaultBaseURL)）",
@@ -302,6 +310,7 @@ private struct ProviderKeyRow: View {
         .onAppear {
             saved = Keychain.has(account: provider.id)
             baseURL = UserDefaults.standard.string(forKey: "base.\(provider.id)") ?? ""
+            diarize = (UserDefaults.standard.object(forKey: "assemblyai.diarize") as? Bool) ?? true
         }
     }
 }
