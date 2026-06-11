@@ -15,7 +15,7 @@ struct SettingsView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("models.custom") private var customModels = ""
     @AppStorage("ai.auto") private var aiAuto = false
-    @AppStorage("ai.provider") private var aiProvider = AICorrector.appleID
+    @AppStorage("ai.provider") private var aiProvider = AICorrector.providerID
 
     var body: some View {
         Form {

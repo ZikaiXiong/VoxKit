@@ -200,7 +200,10 @@ final class AudioRecorder: ObservableObject {
         let now = CFAbsoluteTimeGetCurrent()
         if now - lastUIUpdate > 0.06 {
             lastUIUpdate = now
-            let lv = min(1, rms * 5)
+            // Perceptual (dB) scale: quiet speech still moves the meter visibly.
+            // Maps -50 dB (whisper) … -10 dB (loud) onto 0…1.
+            let db = 20 * log10(max(rms, 1e-6))
+            let lv = min(1, max(0, (db + 50) / 40))
             DispatchQueue.main.async {
                 self.level = lv
                 self.peakLevel = max(self.peakLevel, lv)
