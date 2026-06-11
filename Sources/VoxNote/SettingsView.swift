@@ -71,17 +71,13 @@ struct SettingsView: View {
 
     private var dictationSection: some View {
         Section(L.t("听写", "Dictation")) {
-            Picker(L.t("默认服务", "Default Service"), selection: state.providerBinding) {
-                ForEach(Providers.all) { p in
-                    Text(p.displayName).tag(p.id)
-                }
-            }
-            if state.provider.id != "apple" {
-                Picker(L.t("默认模型", "Default Model"), selection: state.modelBinding) {
-                    ForEach(ProviderConfig.models(state.provider), id: \.self) { Text($0).tag($0) }
-                    if ProviderConfig.models(state.provider).isEmpty { Text(L.t("未配置", "Not set")).tag("") }
-                }
-            }
+            modeServiceRow(mode: .quick,
+                           label: L.t("快速听写服务", "Quick Dictation Service"))
+            modeServiceRow(mode: .meeting,
+                           label: L.t("会议记录服务", "Meeting Service"))
+            Text(L.t("两种模式分别记住自己的服务与模型；在「听写」页切换模式时自动带出。",
+                     "Each mode remembers its own service & model; the Dictate page swaps them as you switch modes."))
+                .font(.caption).foregroundStyle(.secondary)
             Picker(L.t("听写语言", "Dictation Language"), selection: $state.language) {
                 ForEach(LanguageChoice.allCases) { Text($0.label).tag($0) }
             }
@@ -99,6 +95,24 @@ struct SettingsView: View {
                 Text(L.t("需要辅助功能权限：系统设置 → 隐私与安全性 → 辅助功能 中勾选「声记」",
                          "Needs Accessibility permission: System Settings → Privacy & Security → Accessibility"))
                     .font(.caption).foregroundStyle(.orange)
+            }
+        }
+    }
+
+    /// Service + model pickers bound to one mode's remembered selection
+    @ViewBuilder
+    private func modeServiceRow(mode: TranscriptionMode, label: String) -> some View {
+        let pid = AppState.storedProvider(for: mode)
+        Picker(label, selection: state.providerBinding(for: mode)) {
+            ForEach(Providers.all) { p in
+                Text(p.displayName).tag(p.id)
+            }
+        }
+        if pid != "apple" {
+            let models = ProviderConfig.models(Providers.by(pid))
+            Picker(L.t("　└ 模型", "　└ Model"), selection: state.modelBinding(for: mode)) {
+                ForEach(models, id: \.self) { Text($0).tag($0) }
+                if models.isEmpty { Text(L.t("未配置", "Not set")).tag("") }
             }
         }
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// In-app model guide: prices and scenario recommendations, one click away from
 /// the model pickers. Prices are ballpark figures (verified 2026-06) — vendors change them.
@@ -13,6 +14,7 @@ struct ModelGuideView: View {
         let price: String
         let note: String
         var recommended = false
+        var url: String? = nil
     }
 
     private var entries: [Entry] {
@@ -28,26 +30,32 @@ struct ModelGuideView: View {
                       price: L.t("≈ $0.04/小时", "≈ $0.04/hr"),
                       note: L.t("性价比之王：极快极便宜，中英文都不错，日常云端转写推荐。",
                                 "Best value: blazing fast and dirt cheap, solid for Chinese & English."),
-                      recommended: true),
+                      recommended: true,
+                      url: "https://groq.com/pricing"),
                 Entry(service: "OpenAI", model: "gpt-4o-mini-transcribe",
                       price: L.t("≈ $0.18/小时", "≈ $0.18/hr"),
                       note: L.t("准确率高、口语顺滑；但对“对话式”语音偶发自由发挥。",
-                                "High accuracy and fluent output; occasionally improvises on conversational audio.")),
+                                "High accuracy and fluent output; occasionally improvises on conversational audio."),
+                      url: "https://platform.openai.com/docs/pricing"),
                 Entry(service: "OpenAI", model: "whisper-1 / gpt-4o-transcribe",
                       price: L.t("≈ $0.36/小时", "≈ $0.36/hr"),
                       note: L.t("whisper-1 老实稳定；gpt-4o-transcribe 准确率最高。",
-                                "whisper-1 is faithful and steady; gpt-4o-transcribe tops accuracy.")),
+                                "whisper-1 is faithful and steady; gpt-4o-transcribe tops accuracy."),
+                      url: "https://platform.openai.com/docs/pricing"),
                 Entry(service: L.t("硅基流动", "SiliconFlow"), model: "SenseVoiceSmall",
                       price: L.t("极低 · 国内直连", "Very low cost"),
-                      note: L.t("中文识别强，国内网络友好。", "Strong Chinese recognition; great connectivity in China.")),
+                      note: L.t("中文识别强，国内网络友好。", "Strong Chinese recognition; great connectivity in China."),
+                      url: "https://siliconflow.cn"),
                 Entry(service: "AssemblyAI", model: "universal-3-pro",
                       price: L.t("$0.21/小时（说话人分离 +$0.02）", "$0.21/hr (+$0.02 diarization)"),
                       note: L.t("多人会议/采访首选：输出「说话人 A/B」分段稿，长音频免分段。直接支持英西葡法德意，其他语言（含中文）自动回退 universal-2。注册送 $50 额度。",
                                 "Best for meetings/interviews: Speaker A/B segmented output, no chunking. Native EN/ES/PT/FR/DE/IT; other languages (incl. Chinese) auto-fall back to universal-2. $50 free signup credit."),
-                      recommended: true),
+                      recommended: true,
+                      url: "https://www.assemblyai.com/pricing"),
                 Entry(service: "AssemblyAI", model: "universal-2",
                       price: L.t("$0.15/小时", "$0.15/hr"),
-                      note: L.t("99 种语言（含中文），同样支持说话人分离。", "99 languages incl. Chinese, also supports diarization.")),
+                      note: L.t("99 种语言（含中文），同样支持说话人分离。", "99 languages incl. Chinese, also supports diarization."),
+                      url: "https://www.assemblyai.com/pricing"),
             ]
         case .tts:
             return [
@@ -60,13 +68,16 @@ struct ModelGuideView: View {
                       price: L.t("≈ $0.015/分钟音频", "≈ $0.015/min of audio"),
                       note: L.t("自然度高、10 种音色，中英文皆佳——云端首选。",
                                 "Very natural, 10 voices, great in Chinese & English — top cloud pick."),
-                      recommended: true),
+                      recommended: true,
+                      url: "https://platform.openai.com/docs/pricing"),
                 Entry(service: L.t("硅基流动", "SiliconFlow"), model: "CosyVoice2-0.5B",
                       price: L.t("极低 · 国内直连", "Very low cost"),
-                      note: L.t("中文自然度好，价格便宜。", "Natural Chinese output at a low price.")),
+                      note: L.t("中文自然度好，价格便宜。", "Natural Chinese output at a low price."),
+                      url: "https://siliconflow.cn"),
                 Entry(service: "Groq", model: "playai-tts",
                       price: L.t("低价 · 极快", "Low cost · very fast"),
-                      note: L.t("英文为主，生成速度快。", "English-focused, very fast generation.")),
+                      note: L.t("英文为主，生成速度快。", "English-focused, very fast generation."),
+                      url: "https://groq.com/pricing"),
             ]
         }
     }
@@ -95,10 +106,25 @@ struct ModelGuideView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()
-                    Text(entry.price)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.indigo)
-                        .frame(width: 120, alignment: .trailing)
+                    VStack(alignment: .trailing, spacing: 3) {
+                        Text(entry.price)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.indigo)
+                        if let urlString = entry.url, let url = URL(string: urlString) {
+                            Button {
+                                NSWorkspace.shared.open(url)
+                            } label: {
+                                HStack(spacing: 2) {
+                                    Text(L.t("官网", "Site"))
+                                    Image(systemName: "arrow.up.right")
+                                }
+                                .font(.caption2)
+                            }
+                            .buttonStyle(.link)
+                            .help(urlString)
+                        }
+                    }
+                    .frame(width: 130, alignment: .trailing)
                 }
                 .padding(.vertical, 3)
                 if entry.id != entries.last?.id { Divider() }

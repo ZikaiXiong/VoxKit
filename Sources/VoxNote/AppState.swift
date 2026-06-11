@@ -40,7 +40,11 @@ final class AppState: ObservableObject, @unchecked Sendable {
     // UI state
     @Published var phase: Phase = .idle
     @Published var activeMode: TranscriptionMode = .quick
-    @Published var uiMode: TranscriptionMode = .quick
+    /// Dictation and meetings remember their own provider/model — switching the
+    /// segmented mode control swaps the whole selection.
+    @Published var uiMode: TranscriptionMode = .quick {
+        didSet { if uiMode != oldValue { reloadSelection() } }
+    }
     @Published var liveText = ""
     @Published var selectedPage: MainPage? = .record
     @Published var selectedSessionID: UUID?
@@ -76,13 +80,15 @@ final class AppState: ObservableObject, @unchecked Sendable {
     let service = TranscriptionService()
     private let live = AppleLiveRecognizer()
     private var usingLive = false
+    /// Provider/model captured at recording start (per-mode selection)
+    private(set) var activeProvider: Provider = Providers.appleLocal
+    private var activeModel = ""
 
     var isRecording: Bool { phase == .recording || phase == .paused }
 
     private init() {
         let defaults = UserDefaults.standard
-        let pid = defaults.string(forKey: "providerID") ?? "apple"
-        providerID = Providers.all.contains(where: { $0.id == pid }) ? pid : "apple"
+        providerID = Self.storedProvider(for: .quick)
         model = ""
         language = LanguageChoice(rawValue: defaults.string(forKey: "language") ?? "auto") ?? .auto
         uiLangPref = defaults.string(forKey: "uiLang") ?? "system"
@@ -111,11 +117,39 @@ final class AppState: ObservableObject, @unchecked Sendable {
 
     var provider: Provider { Providers.by(providerID) }
 
-    // MARK: Model selection
+    // MARK: Model selection (remembered per mode)
+
+    /// Stored provider for a mode, with first-run smart defaults based on configured keys:
+    /// meetings lean AssemblyAI (diarization), dictation leans OpenAI.
+    nonisolated static func storedProvider(for mode: TranscriptionMode) -> String {
+        let defaults = UserDefaults.standard
+        if let v = defaults.string(forKey: "provider.\(mode.rawValue)"),
+           Providers.all.contains(where: { $0.id == v }) {
+            return v
+        }
+        if mode == .meeting, Keychain.has(account: "assemblyai") { return "assemblyai" }
+        if mode == .quick, Keychain.has(account: "openai") { return "openai" }
+        if let legacy = defaults.string(forKey: "providerID"),
+           Providers.all.contains(where: { $0.id == legacy }) {
+            return legacy
+        }
+        return "apple"
+    }
+
+    func provider(for mode: TranscriptionMode) -> Provider {
+        Providers.by(Self.storedProvider(for: mode))
+    }
+
+    func resolvedModel(forProvider pid: String) -> String {
+        let models = ProviderConfig.models(Providers.by(pid))
+        let saved = UserDefaults.standard.string(forKey: "model.\(pid)")
+        if let saved, models.contains(saved) { return saved }
+        return models.first ?? ""
+    }
 
     func selectProvider(_ id: String) {
         providerID = id
-        UserDefaults.standard.set(id, forKey: "providerID")
+        UserDefaults.standard.set(id, forKey: "provider.\(uiMode.rawValue)")
         restoreModel()
     }
 
@@ -125,13 +159,12 @@ final class AppState: ObservableObject, @unchecked Sendable {
     }
 
     private func restoreModel() {
-        let models = ProviderConfig.models(provider)
-        let saved = UserDefaults.standard.string(forKey: "model.\(providerID)")
-        if let saved, models.contains(saved) {
-            model = saved
-        } else {
-            model = models.first ?? ""
-        }
+        model = resolvedModel(forProvider: providerID)
+    }
+
+    private func reloadSelection() {
+        providerID = Self.storedProvider(for: uiMode)
+        restoreModel()
     }
 
     var providerBinding: Binding<String> {
@@ -139,6 +172,31 @@ final class AppState: ObservableObject, @unchecked Sendable {
     }
     var modelBinding: Binding<String> {
         Binding(get: { self.model }, set: { self.selectModel($0) })
+    }
+
+    /// Per-mode bindings for the Settings page
+    func providerBinding(for mode: TranscriptionMode) -> Binding<String> {
+        Binding(get: { Self.storedProvider(for: mode) },
+                set: { newID in
+                    UserDefaults.standard.set(newID, forKey: "provider.\(mode.rawValue)")
+                    if mode == self.uiMode {
+                        self.providerID = newID
+                        self.restoreModel()
+                    }
+                    self.objectWillChange.send()
+                })
+    }
+
+    func modelBinding(for mode: TranscriptionMode) -> Binding<String> {
+        Binding(get: {
+            let pid = Self.storedProvider(for: mode)
+            return self.resolvedModel(forProvider: pid)
+        }, set: { m in
+            let pid = Self.storedProvider(for: mode)
+            UserDefaults.standard.set(m, forKey: "model.\(pid)")
+            if mode == self.uiMode { self.model = m }
+            self.objectWillChange.send()
+        })
     }
 
     // MARK: Recording flow
@@ -166,12 +224,16 @@ final class AppState: ObservableObject, @unchecked Sendable {
                                "Microphone access denied: allow VoxNote under System Settings → Privacy & Security → Microphone.")
             return
         }
+        // Snapshot the mode's own provider/model — the picker may change mid-recording
+        let provider = provider(for: mode)
         if provider.needsKey && !Keychain.has(account: provider.id) {
             errorMessage = L.t("\(provider.displayName) 还没有配置 API Key，请到「设置」中填写，或切换到「本机识别」。",
                                "\(provider.displayName) has no API key yet. Add one in Settings, or switch to On-Device.")
             selectedPage = .settings
             return
         }
+        activeProvider = provider
+        activeModel = resolvedModel(forProvider: provider.id)
 
         let url = store.newAudioURL()
         liveText = ""
@@ -290,7 +352,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
             usingLive = false
             if !delivered {
                 // Cloud providers, or fallback to file transcription when live recognition produced nothing
-                let version = await service.transcribe(session: session, provider: provider, model: model,
+                let version = await service.transcribe(session: session, provider: activeProvider, model: activeModel,
                                                        language: language, store: store)
                 if let version {
                     deliverQuickResult(version.displayText)
@@ -303,7 +365,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
             phase = .idle
             selectedSessionID = session.id
             selectedPage = .history
-            let p = provider, m = model, lang = language
+            let p = activeProvider, m = activeModel, lang = language
             Task { await self.service.transcribe(session: session, provider: p, model: m, language: lang, store: self.store) }
         }
     }
