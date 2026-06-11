@@ -40,7 +40,7 @@ fi
 echo "✅ Done: $PWD/$APP"
 echo "   First run: open \"$PWD/$APP\" (macOS will ask for microphone/speech permissions)"
 
-# --zip: build the distribution archive (see DISTRIBUTION.md)
+# --zip: build the distribution archive
 if [[ "${1:-}" == "--zip" ]]; then
   VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Resources/Info.plist)
   ZIP="dist/VoxKit-${VERSION}.zip"
