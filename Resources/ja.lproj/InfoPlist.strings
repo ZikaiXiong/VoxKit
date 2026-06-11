@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "VoxKit";
+"NSMicrophoneUsageDescription" = "VoxKit は音声の録音と文字起こしのためにマイクを使用します。";
+"NSSpeechRecognitionUsageDescription" = "VoxKit はオンデバイス文字起こしのためにシステムの音声認識を使用します。";

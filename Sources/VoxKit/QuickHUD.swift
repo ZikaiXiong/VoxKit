@@ -99,9 +99,9 @@ private struct HUDContent: View {
 
     private var titleLine: String {
         switch state.phase {
-        case .recording: return L.t("正在听写 · ", "Dictating · ") + state.activeProvider.displayName
-        case .paused: return L.t("已暂停", "Paused")
-        case .processing: return state.processingDetail ?? L.t("正在转写…", "Transcribing…")
+        case .recording: return L.t("Dictating · ", "正在听写 · ") + state.activeProvider.displayName
+        case .paused: return L.t("Paused", "已暂停")
+        case .processing: return state.processingDetail ?? L.t("Transcribing…", "正在转写…")
         case .done(let msg, _): return msg
         case .idle: return L.appName
         }
@@ -112,10 +112,10 @@ private struct HUDContent: View {
         switch state.phase {
         case .recording, .paused:
             Text(!recorder.isReceivingAudio && state.phase == .recording
-                 ? L.t("正在启动麦克风…", "Starting the microphone…")
+                 ? L.t("Starting the microphone…", "正在启动麦克风…")
                  : (state.liveText.isEmpty
-                    ? L.t("请讲话…（再按 \(HotkeyPreset.current().label) 完成并复制）",
-                          "Speak… (press \(HotkeyPreset.current().label) again to finish & copy)")
+                    ? L.t("Speak… (press \(HotkeyPreset.current().label) again to finish & copy)",
+                          "请讲话…（再按 \(HotkeyPreset.current().label) 完成并复制）")
                     : state.liveText))
                 .font(.callout)
                 .foregroundStyle(state.liveText.isEmpty ? .secondary : .primary)
@@ -124,14 +124,14 @@ private struct HUDContent: View {
         case .processing:
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
-                Text(state.processingDetail ?? L.t("识别内容生成中…", "Recognizing…"))
+                Text(state.processingDetail ?? L.t("Recognizing…", "识别内容生成中…"))
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
         case .done(_, let success):
             Text(success
-                 ? L.t("可直接 ⌘V 粘贴", "Press ⌘V to paste")
-                 : L.t("可到主窗口「历史」中重试其他模型", "Retry with another model from History"))
+                 ? L.t("Press ⌘V to paste", "可直接 ⌘V 粘贴")
+                 : L.t("Retry with another model from History", "可到主窗口「历史」中重试其他模型"))
                 .font(.callout)
                 .foregroundStyle(.secondary)
         case .idle:
@@ -182,7 +182,7 @@ private struct HUDContent: View {
                 }
                 .buttonStyle(.bordered)
                 .clipShape(Circle())
-                .help(L.t("取消", "Cancel"))
+                .help(L.t("Cancel", "取消"))
 
                 Button {
                     Task { await state.stopAndFinish() }
@@ -193,7 +193,7 @@ private struct HUDContent: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .clipShape(Circle())
-                .help(L.t("完成并复制", "Finish & copy"))
+                .help(L.t("Finish & copy", "完成并复制"))
             }
         }
     }

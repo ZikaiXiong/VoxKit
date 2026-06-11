@@ -42,9 +42,9 @@ private struct DetailContent: View {
                 VStack(spacing: 10) {
                     ProgressView()
                     Text(progress.label ?? (progress.total > 1
-                         ? L.t("正在转写 第 \(min(progress.done + 1, progress.total))/\(progress.total) 段…",
-                               "Transcribing chunk \(min(progress.done + 1, progress.total))/\(progress.total)…")
-                         : L.t("正在转写…", "Transcribing…")))
+                         ? L.t("Transcribing chunk \(min(progress.done + 1, progress.total))/\(progress.total)…",
+                               "正在转写 第 \(min(progress.done + 1, progress.total))/\(progress.total) 段…")
+                         : L.t("Transcribing…", "正在转写…")))
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
@@ -52,9 +52,9 @@ private struct DetailContent: View {
             } else {
                 Spacer()
                 VStack(spacing: 12) {
-                    Text(L.t("这条录音还没有转写结果", "This recording has no transcript yet"))
+                    Text(L.t("This recording has no transcript yet", "这条录音还没有转写结果"))
                         .foregroundStyle(.secondary)
-                    retranscribeMenu(label: L.t("选择模型转写", "Transcribe with…"))
+                    retranscribeMenu(label: L.t("Transcribe with…", "选择模型转写"))
                 }
                 .frame(maxWidth: .infinity)
                 Spacer()
@@ -79,7 +79,7 @@ private struct DetailContent: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                TextField(L.t("标题", "Title"), text: store.titleBinding(for: session.id))
+                TextField(L.t("Title", "标题"), text: store.titleBinding(for: session.id))
                     .textFieldStyle(.plain)
                     .font(.title2.weight(.semibold))
                 Spacer()
@@ -89,12 +89,12 @@ private struct DetailContent: View {
                 } label: {
                     Image(systemName: "trash")
                 }
-                .help(L.t("删除此录音及全部转写", "Delete this recording and all transcripts"))
+                .help(L.t("Delete this recording and all transcripts", "删除此录音及全部转写"))
             }
             HStack(spacing: 8) {
                 TagChip(text: live.mode.label, color: live.mode == .quick ? .blue : .purple)
-                Text(L.t("\(Format.shortDate(live.date)) · 时长 \(Format.mmss(live.duration)) · \(live.transcripts.count) 个转写版本",
-                         "\(Format.shortDate(live.date)) · \(Format.mmss(live.duration)) · \(live.transcripts.count) transcript version(s)"))
+                Text(L.t("\(Format.shortDate(live.date)) · \(Format.mmss(live.duration)) · \(live.transcripts.count) transcript version(s)",
+                         "\(Format.shortDate(live.date)) · 时长 \(Format.mmss(live.duration)) · \(live.transcripts.count) 个转写版本"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -105,22 +105,22 @@ private struct DetailContent: View {
 
     private func versionBar(_ version: TranscriptVersion) -> some View {
         HStack(spacing: 10) {
-            Picker(L.t("版本", "Version"), selection: Binding(
+            Picker(L.t("Version", "版本"), selection: Binding(
                 get: { version.id },
                 set: { store.setCurrentTranscript(sessionID: session.id, transcriptID: $0) }
             )) {
                 ForEach(live.transcripts) { v in
-                    Text("\(Providers.by(v.providerID).displayName) · \(v.model == "on-device" ? L.t("本机", "on-device") : v.model)")
+                    Text("\(Providers.by(v.providerID).displayName) · \(v.model == "on-device" ? L.t("on-device", "本机") : v.model)")
                         .tag(v.id)
                 }
             }
             .fixedSize()
 
             if version.chunkCount > 1 {
-                TagChip(text: L.t("自动分了 \(version.chunkCount) 段", "Auto-split: \(version.chunkCount) chunks"), color: .indigo)
+                TagChip(text: L.t("Auto-split: \(version.chunkCount) chunks", "自动分了 \(version.chunkCount) 段"), color: .indigo)
             }
             if let note = version.note {
-                TagChip(text: note, color: note.contains(L.t("失败", "failed")) ? .orange : .teal)
+                TagChip(text: note, color: note.contains(L.t("failed", "失败")) ? .orange : .teal)
             }
 
             Spacer()
@@ -130,12 +130,12 @@ private struct DetailContent: View {
                     ProgressView().controlSize(.small)
                     Text(progress.label ?? (progress.total > 1
                          ? "\(progress.done)/\(progress.total)"
-                         : L.t("转写中", "Working…")))
+                         : L.t("Working…", "转写中")))
                         .font(.caption).foregroundStyle(.secondary)
                 }
             } else {
                 aiCorrectButton(version)
-                retranscribeMenu(label: L.t("重转", "Redo"))
+                retranscribeMenu(label: L.t("Redo", "重转"))
             }
         }
     }
@@ -144,11 +144,11 @@ private struct DetailContent: View {
         Button {
             state.aiCorrect(sessionID: session.id, transcriptID: version.id)
         } label: {
-            Label(L.t("AI 修正", "AI Fix"), systemImage: "wand.and.stars")
+            Label(L.t("AI Fix", "AI 修正"), systemImage: "wand.and.stars")
         }
         .help(AICorrector.isConfigured
-              ? L.t("用 \(AICorrector.configuredLabel) 带词库整体校对", "Proofread with \(AICorrector.configuredLabel) using your glossary")
-              : L.t("先到「设置 → AI 修正」选择模型", "Configure under Settings → AI Correction first"))
+              ? L.t("Proofread with \(AICorrector.configuredLabel) using your glossary", "用 \(AICorrector.configuredLabel) 带词库整体校对")
+              : L.t("Configure under Settings → AI Correction first", "先到「设置 → AI 修正」选择模型"))
     }
 
     @ViewBuilder
@@ -174,7 +174,7 @@ private struct DetailContent: View {
             Label(label, systemImage: "arrow.triangle.2.circlepath")
         }
         .fixedSize()
-        .help(L.t("用其他模型重新转写（原录音永不丢失）", "Re-transcribe with another model (the audio is never lost)"))
+        .help(L.t("Re-transcribe with another model (the audio is never lost)", "用其他模型重新转写（原录音永不丢失）"))
     }
 
     // MARK: Correction suggestions
@@ -204,15 +204,15 @@ private struct DetailContent: View {
                             .background(Capsule().fill(Color.indigo.opacity(0.1)))
                         }
                         .buttonStyle(.plain)
-                        .help(L.t("点击替换全部 \(s.occurrences) 处", "Replace all \(s.occurrences) occurrence(s)"))
+                        .help(L.t("Replace all \(s.occurrences) occurrence(s)", "点击替换全部 \(s.occurrences) 处"))
                     }
                     if suggestions.count > 1 {
-                        Button(L.t("全部应用", "Apply All")) {
+                        Button(L.t("Apply All", "全部应用")) {
                             var t = version.correctedText ?? version.originalText
                             for s in suggestions { t = Learner.apply(s.rule, to: t) }
                             store.updateTranscript(sessionID: session.id, transcriptID: version.id) { $0.correctedText = t }
                             tab = .corrected
-                            showToast(L.t("已应用 \(suggestions.count) 条修正", "Applied \(suggestions.count) corrections"))
+                            showToast(L.t("Applied \(suggestions.count) corrections", "已应用 \(suggestions.count) 条修正"))
                         }
                         .controlSize(.small)
                     }
@@ -227,7 +227,7 @@ private struct DetailContent: View {
         let applied = Learner.apply(rule, to: base)
         store.updateTranscript(sessionID: session.id, transcriptID: version.id) { $0.correctedText = applied }
         tab = .corrected
-        showToast(L.t("已替换「\(rule.original) → \(rule.replacement)」", "Replaced “\(rule.original) → \(rule.replacement)”"))
+        showToast(L.t("Replaced “\(rule.original) → \(rule.replacement)”", "已替换「\(rule.original) → \(rule.replacement)」"))
     }
 
     // MARK: Text area
@@ -236,15 +236,15 @@ private struct DetailContent: View {
         VStack(spacing: 8) {
             HStack {
                 Picker("", selection: $tab) {
-                    Text(L.t("修正稿", "Corrected")).tag(Tab.corrected)
-                    Text(L.t("模型原文", "Original")).tag(Tab.original)
+                    Text(L.t("Corrected", "修正稿")).tag(Tab.corrected)
+                    Text(L.t("Original", "模型原文")).tag(Tab.original)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 210)
 
                 if version.hasCorrection {
-                    TagChip(text: L.t("与原文不同", "Differs from original"), color: .green)
+                    TagChip(text: L.t("Differs from original", "与原文不同"), color: .green)
                 }
                 Spacer()
             }
@@ -252,7 +252,7 @@ private struct DetailContent: View {
             Group {
                 if tab == .original {
                     ScrollView {
-                        Text(version.originalText.isEmpty ? L.t("（空）", "(empty)") : version.originalText)
+                        Text(version.originalText.isEmpty ? L.t("(empty)", "（空）") : version.originalText)
                             .textSelection(.enabled)
                             .font(.system(size: 14))
                             .lineSpacing(5)
@@ -285,15 +285,15 @@ private struct DetailContent: View {
                 let text = tab == .original ? version.originalText : (version.correctedText ?? version.originalText)
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(text, forType: .string)
-                showToast(L.t("已复制", "Copied"))
+                showToast(L.t("Copied", "已复制"))
             } label: {
-                Label(L.t("复制", "Copy"), systemImage: "doc.on.doc")
+                Label(L.t("Copy", "复制"), systemImage: "doc.on.doc")
             }
 
             Button {
                 exportText(version)
             } label: {
-                Label(L.t("导出 .txt", "Export .txt"), systemImage: "square.and.arrow.up")
+                Label(L.t("Export .txt", "导出 .txt"), systemImage: "square.and.arrow.up")
             }
 
             Spacer()
@@ -302,14 +302,14 @@ private struct DetailContent: View {
                 let corrected = version.correctedText ?? version.originalText
                 let learned = store.learn(original: version.originalText, corrected: corrected)
                 showToast(learned > 0
-                          ? L.t("已保存，学到 \(learned) 个修正词对", "Saved — learned \(learned) correction pair(s)")
-                          : L.t("已保存修正稿", "Corrected text saved"))
+                          ? L.t("Saved — learned \(learned) correction pair(s)", "已保存，学到 \(learned) 个修正词对")
+                          : L.t("Corrected text saved", "已保存修正稿"))
             } label: {
-                Label(L.t("保存修正并学习", "Save & Learn"), systemImage: "brain.head.profile")
+                Label(L.t("Save & Learn", "保存修正并学习"), systemImage: "brain.head.profile")
             }
             .buttonStyle(.borderedProminent)
             .disabled(!version.hasCorrection)
-            .help(L.t("对比原文提取你改过的词，下次自动提示/修正", "Diffs against the original to learn your fixes for next time"))
+            .help(L.t("Diffs against the original to learn your fixes for next time", "对比原文提取你改过的词，下次自动提示/修正"))
         }
     }
 
@@ -321,7 +321,7 @@ private struct DetailContent: View {
         var content = "# \(live.title)\n\(Format.shortDate(live.date)) · \(Format.mmss(live.duration)) · \(Providers.by(version.providerID).displayName) \(version.model)\n\n"
         content += version.displayText
         try? content.write(to: url, atomically: true, encoding: .utf8)
-        showToast(L.t("已导出", "Exported"))
+        showToast(L.t("Exported", "已导出"))
     }
 
     private func showToast(_ text: String) {

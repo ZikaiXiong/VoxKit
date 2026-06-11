@@ -15,7 +15,7 @@ enum TranscriptionMode: String, Codable, CaseIterable, Identifiable {
     case meeting
 
     var id: String { rawValue }
-    var label: String { self == .quick ? L.t("快速听写", "Quick Dictation") : L.t("会议记录", "Meeting") }
+    var label: String { self == .quick ? L.t("Quick Dictation", "快速听写") : L.t("Meeting", "会议记录") }
     var icon: String { self == .quick ? "bolt.fill" : "person.2.wave.2.fill" }
 }
 
@@ -30,7 +30,7 @@ enum LanguageChoice: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .auto: return L.t("自动检测", "Auto Detect")
+        case .auto: return L.t("Auto Detect", "自动检测")
         case .zh: return "中文"
         case .en: return "English"
         case .es: return "Español"

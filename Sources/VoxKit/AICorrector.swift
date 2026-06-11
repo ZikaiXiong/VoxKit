@@ -46,7 +46,7 @@ enum AICorrector {
 
     static var configuredLabel: String {
         providerID == appleID
-            ? L.t("Apple 智能（本机）", "Apple Intelligence (on-device)")
+            ? L.t("Apple Intelligence (on-device)", "Apple 智能（本机）")
             : "\(Providers.by(providerID).displayName) · \(model(for: providerID))"
     }
 
@@ -66,8 +66,8 @@ enum AICorrector {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return Outcome(text: text) }
         guard isConfigured else {
-            throw VoxError.message(L.t("AI 修正还没有配置，请到「设置 → AI 修正」选择模型。",
-                                       "AI correction is not configured. See Settings → AI Correction."))
+            throw VoxError.message(L.t("AI correction is not configured. See Settings → AI Correction.",
+                                       "AI 修正还没有配置，请到「设置 → AI 修正」选择模型。"))
         }
         let system = systemPrompt(language: language, lexicon: lexicon)
         let chunks = split(trimmed, maxLength: providerID == appleID ? 1500 : 2600)
@@ -135,12 +135,12 @@ enum AICorrector {
         var seen = Set<String>()
         let words = hotwords.filter { seen.insert($0).inserted }.prefix(40)
         if !words.isEmpty {
-            glossary += L.t("用户词库（这些词必须拼写正确）：", "User glossary (these terms must be spelled exactly): ")
+            glossary += L.t("User glossary (these terms must be spelled exactly): ", "用户词库（这些词必须拼写正确）：")
                 + words.joined(separator: "、") + "\n"
         }
         let pairs = lexicon.rules.filter(\.isActive).prefix(30).map { "\($0.original)→\($0.replacement)" }
         if !pairs.isEmpty {
-            glossary += L.t("历史纠错对照（左边是常见误识别，右边是正确写法）：", "Known mis-recognitions (wrong→right): ")
+            glossary += L.t("Known mis-recognitions (wrong→right): ", "历史纠错对照（左边是常见误识别，右边是正确写法）：")
                 + pairs.joined(separator: "，") + "\n"
         }
         let langHint: String
@@ -150,7 +150,7 @@ enum AICorrector {
         case "es": langHint = "The text is in Spanish."
         case "fr": langHint = "The text is in French."
         case "ja": langHint = "The text is in Japanese."
-        default: langHint = L.t("文本可能是中文、英文或混合。", "The text may be Chinese, English, or mixed.")
+        default: langHint = L.t("The text may be Chinese, English, or mixed.", "文本可能是中文、英文或混合。")
         }
         return L.t("""
             你是「语音转写文本」的校对器，不是对话助手。
@@ -217,8 +217,8 @@ enum AICorrector {
             // the default ones reject casual spoken content far too eagerly.
             let model = SystemLanguageModel(useCase: .general, guardrails: .permissiveContentTransformations)
             guard case .available = model.availability else {
-                throw VoxError.message(L.t("Apple 智能当前不可用（需在系统设置中开启 Apple Intelligence）。",
-                                           "Apple Intelligence is unavailable. Enable it in System Settings."))
+                throw VoxError.message(L.t("Apple Intelligence is unavailable. Enable it in System Settings.",
+                                           "Apple 智能当前不可用（需在系统设置中开启 Apple Intelligence）。"))
             }
             let session = LanguageModelSession(model: model, instructions: instructions)
             do {
@@ -226,15 +226,15 @@ enum AICorrector {
                 return response.content
             } catch let error as LanguageModelSession.GenerationError {
                 if case .guardrailViolation = error {
-                    throw VoxError.message(L.t("这段内容被 Apple 安全护栏拦截，已保留原文（可在设置中换用云端模型修正）。",
-                                               "Blocked by Apple's safety guardrails; the original text was kept (try a cloud model in Settings)."))
+                    throw VoxError.message(L.t("Blocked by Apple's safety guardrails; the original text was kept (try a cloud model in Settings).",
+                                               "这段内容被 Apple 安全护栏拦截，已保留原文（可在设置中换用云端模型修正）。"))
                 }
                 throw error
             }
         }
         #endif
-        throw VoxError.message(L.t("Apple 本地大模型需要 macOS 26 及以上。",
-                                   "On-device Apple model requires macOS 26 or later."))
+        throw VoxError.message(L.t("On-device Apple model requires macOS 26 or later.",
+                                   "Apple 本地大模型需要 macOS 26 及以上。"))
     }
 
     // MARK: OpenAI-compatible chat/completions
@@ -244,10 +244,10 @@ enum AICorrector {
         let base = ProviderConfig.baseURL(provider).trimmingCharacters(in: .whitespaces)
         guard !base.isEmpty,
               let url = URL(string: (base.hasSuffix("/") ? base + "chat/completions" : base + "/chat/completions")) else {
-            throw VoxError.message(L.t("\(provider.displayName) 的 API 地址无效。", "Invalid API URL for \(provider.displayName)."))
+            throw VoxError.message(L.t("Invalid API URL for \(provider.displayName).", "\(provider.displayName) 的 API 地址无效。"))
         }
         guard let key = Keychain.get(account: provider.id), !key.isEmpty else {
-            throw VoxError.message(L.t("\(provider.displayName) 未配置 API Key。", "\(provider.displayName) has no API key."))
+            throw VoxError.message(L.t("\(provider.displayName) has no API key.", "\(provider.displayName) 未配置 API Key。"))
         }
 
         var request = URLRequest(url: url)
@@ -267,7 +267,7 @@ enum AICorrector {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {
-            throw VoxError.message(L.t("\(provider.displayName) 无响应", "No response from \(provider.displayName)"))
+            throw VoxError.message(L.t("No response from \(provider.displayName)", "\(provider.displayName) 无响应"))
         }
         guard http.statusCode == 200 else {
             var message = String(data: data, encoding: .utf8) ?? ""
@@ -281,7 +281,7 @@ enum AICorrector {
               let choices = obj["choices"] as? [[String: Any]],
               let msg = choices.first?["message"] as? [String: Any],
               let content = msg["content"] as? String else {
-            throw VoxError.message(L.t("无法解析 AI 修正结果", "Could not parse AI correction response"))
+            throw VoxError.message(L.t("Could not parse AI correction response", "无法解析 AI 修正结果"))
         }
         return content
     }

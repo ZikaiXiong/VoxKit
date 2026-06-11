@@ -89,8 +89,8 @@ final class TranscriptionService: ObservableObject {
                 }
                 if let lastError {
                     failures += 1
-                    text = L.t("〔本段转写失败：\(lastError.localizedDescription)〕",
-                               "[Chunk failed: \(lastError.localizedDescription)]")
+                    text = L.t("[Chunk failed: \(lastError.localizedDescription)]",
+                               "〔本段转写失败：\(lastError.localizedDescription)〕")
                 }
                 let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                 if chunks.count > 1 {
@@ -109,13 +109,13 @@ final class TranscriptionService: ObservableObject {
             var version = TranscriptVersion(
                 providerID: provider.id, model: model, language: language.rawValue,
                 originalText: joined, chunkCount: chunks.count,
-                note: failures > 0 ? L.t("\(failures)/\(chunks.count) 段失败", "\(failures)/\(chunks.count) chunks failed") : nil)
+                note: failures > 0 ? L.t("\(failures)/\(chunks.count) chunks failed", "\(failures)/\(chunks.count) 段失败") : nil)
 
             if UserDefaults.standard.object(forKey: "autoApplyRules") as? Bool ?? true {
                 let (fixed, n) = Learner.applyActiveRules(store.lexicon.rules, to: joined)
                 if n > 0, fixed != joined {
                     version.correctedText = fixed
-                    let auto = L.t("自动修正 \(n) 处", "Auto-fixed \(n) spots")
+                    let auto = L.t("Auto-fixed \(n) spots", "自动修正 \(n) 处")
                     version.note = version.note.map { $0 + "；" + auto } ?? auto
                 }
             }
@@ -123,23 +123,23 @@ final class TranscriptionService: ObservableObject {
             // 5. Optional: AI grammar correction (holistic proofread using the user glossary)
             if AICorrector.autoEnabled && AICorrector.isConfigured && failures == 0 {
                 progress[session.id] = Progress(done: chunks.count, total: chunks.count,
-                                                label: L.t("AI 修正中…", "AI correcting…"))
+                                                label: L.t("AI correcting…", "AI 修正中…"))
                 do {
                     let outcome = try await AICorrector.correct(
                         text: version.displayText, language: version.language, lexicon: store.lexicon)
                     if outcome.hasChange {
                         version.correctedText = outcome.text
-                        var tag = L.t("AI 修正", "AI corrected")
+                        var tag = L.t("AI corrected", "AI 修正")
                         if outcome.skippedChunks > 0 {
-                            tag += L.t("（\(outcome.skippedChunks) 段跳过）", " (\(outcome.skippedChunks) chunk(s) skipped)")
+                            tag += L.t(" (\(outcome.skippedChunks) chunk(s) skipped)", "（\(outcome.skippedChunks) 段跳过）")
                         }
                         version.note = version.note.map { $0 + "；" + tag } ?? tag
                     } else if outcome.skippedChunks > 0 {
-                        let tag = L.t("AI 修正被跳过", "AI correction skipped")
+                        let tag = L.t("AI correction skipped", "AI 修正被跳过")
                         version.note = version.note.map { $0 + "；" + tag } ?? tag
                     }
                 } catch {
-                    let tag = L.t("AI 修正失败", "AI correction failed")
+                    let tag = L.t("AI correction failed", "AI 修正失败")
                     version.note = version.note.map { $0 + "；" + tag } ?? tag
                 }
             }
@@ -147,7 +147,7 @@ final class TranscriptionService: ObservableObject {
             store.appendTranscript(version, to: session.id)
             return version
         } catch {
-            AppState.shared.errorMessage = L.t("「\(session.title)」转写失败：", "Transcription failed for “\(session.title)”: ")
+            AppState.shared.errorMessage = L.t("Transcription failed for “\(session.title)”: ", "「\(session.title)」转写失败：")
                 + error.localizedDescription
             return nil
         }

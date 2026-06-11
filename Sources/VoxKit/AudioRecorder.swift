@@ -63,7 +63,7 @@ final class AudioRecorder: ObservableObject {
         }
         let inFormat = input.outputFormat(forBus: 0)
         guard inFormat.sampleRate > 0, inFormat.channelCount > 0 else {
-            throw VoxError.message(L.t("没有检测到可用的麦克风输入设备", "No usable microphone input found"))
+            throw VoxError.message(L.t("No usable microphone input found", "没有检测到可用的麦克风输入设备"))
         }
         let settings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,

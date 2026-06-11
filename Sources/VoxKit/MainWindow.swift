@@ -30,8 +30,8 @@ struct MainWindow: View {
             }
         }
         .frame(minWidth: 920, minHeight: 600)
-        .alert(L.t("出错了", "Something went wrong"), isPresented: errorBinding) {
-            Button(L.t("好", "OK")) { state.errorMessage = nil }
+        .alert(L.t("Something went wrong", "出错了"), isPresented: errorBinding) {
+            Button(L.t("OK", "好")) { state.errorMessage = nil }
         } message: {
             Text(state.errorMessage ?? "")
         }
@@ -76,10 +76,10 @@ struct MainWindow: View {
                     Image(systemName: "square.and.arrow.down.on.square.fill")
                         .font(.system(size: 42))
                         .foregroundStyle(LinearGradient.vox)
-                    Text(L.t("松开以导入音频文件", "Drop to import audio files"))
+                    Text(L.t("Drop to import audio files", "松开以导入音频文件"))
                         .font(.title3.weight(.semibold))
-                    Text(L.t("自动转换格式并加入历史，随后可用任意模型转写",
-                             "Converted automatically — transcribe with any model afterwards"))
+                    Text(L.t("Converted automatically — transcribe with any model afterwards",
+                             "自动转换格式并加入历史，随后可用任意模型转写"))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -103,7 +103,7 @@ struct MainWindow: View {
                     .foregroundStyle(LinearGradient.vox)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(L.appName).font(.caption.weight(.semibold))
-                    Text(L.t("快捷键", "Hotkey") + " " + HotkeyPreset.current().label)
+                    Text(L.t("Hotkey", "快捷键") + " " + HotkeyPreset.current().label)
                         .font(.caption2).foregroundStyle(.secondary)
                 }
                 Spacer()

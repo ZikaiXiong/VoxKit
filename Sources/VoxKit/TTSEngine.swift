@@ -12,7 +12,7 @@ enum TTSEngine {
     static let maxInputLength = 4000
 
     static func name(_ id: String) -> String {
-        id == systemID ? L.t("系统语音 (Apple)", "System Voice (Apple)") : Providers.by(id).displayName
+        id == systemID ? L.t("System Voice (Apple)", "系统语音 (Apple)") : Providers.by(id).displayName
     }
 
     static func needsKey(_ id: String) -> Bool { id != systemID }
@@ -63,11 +63,11 @@ enum TTSEngine {
     static func generate(text: String, providerID: String, speed: Double, into directory: URL) async throws -> SpeechItem {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw VoxError.message(L.t("请输入要朗读的文本", "Enter some text first"))
+            throw VoxError.message(L.t("Enter some text first", "请输入要朗读的文本"))
         }
         guard providerID == systemID || trimmed.count <= maxInputLength else {
-            throw VoxError.message(L.t("文本过长（\(trimmed.count) 字）：云端语音单次最多约 \(maxInputLength) 字，请分段生成",
-                                       "Text too long (\(trimmed.count) chars): cloud TTS caps at ~\(maxInputLength) chars per request"))
+            throw VoxError.message(L.t("Text too long (\(trimmed.count) chars): cloud TTS caps at ~\(maxInputLength) chars per request",
+                                       "文本过长（\(trimmed.count) 字）：云端语音单次最多约 \(maxInputLength) 字，请分段生成"))
         }
 
         let model = model(for: providerID)
@@ -94,7 +94,7 @@ enum TTSEngine {
 
     private static func systemVoiceName(_ identifier: String) -> String {
         guard !identifier.isEmpty, let v = AVSpeechSynthesisVoice(identifier: identifier) else {
-            return L.t("默认", "Default")
+            return L.t("Default", "默认")
         }
         return v.name
     }
@@ -151,14 +151,14 @@ enum TTSEngine {
         let base = ProviderConfig.baseURL(provider).trimmingCharacters(in: .whitespaces)
         guard !base.isEmpty,
               let url = URL(string: base.hasSuffix("/") ? base + "audio/speech" : base + "/audio/speech") else {
-            throw VoxError.message(L.t("\(provider.displayName) 的 API 地址无效", "Invalid API URL for \(provider.displayName)"))
+            throw VoxError.message(L.t("Invalid API URL for \(provider.displayName)", "\(provider.displayName) 的 API 地址无效"))
         }
         guard let key = Keychain.get(account: provider.id), !key.isEmpty else {
-            throw VoxError.message(L.t("\(provider.displayName) 未配置 API Key（与转写共用，可在设置中填写）",
-                                       "\(provider.displayName) has no API key (shared with transcription — add one in Settings)"))
+            throw VoxError.message(L.t("\(provider.displayName) has no API key (shared with transcription — add one in Settings)",
+                                       "\(provider.displayName) 未配置 API Key（与转写共用，可在设置中填写）"))
         }
         guard !model.isEmpty else {
-            throw VoxError.message(L.t("请填写语音模型名", "Enter a TTS model name"))
+            throw VoxError.message(L.t("Enter a TTS model name", "请填写语音模型名"))
         }
 
         var request = URLRequest(url: url)
@@ -177,7 +177,7 @@ enum TTSEngine {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {
-            throw VoxError.message(L.t("\(provider.displayName) 无响应", "No response from \(provider.displayName)"))
+            throw VoxError.message(L.t("No response from \(provider.displayName)", "\(provider.displayName) 无响应"))
         }
         guard http.statusCode == 200 else {
             var message = String(data: data, encoding: .utf8) ?? ""
@@ -188,7 +188,7 @@ enum TTSEngine {
             throw VoxError.message("\(provider.displayName) \(http.statusCode)：\(String(message.prefix(300)))")
         }
         guard data.count > 200 else {
-            throw VoxError.message(L.t("\(provider.displayName) 返回的音频为空", "\(provider.displayName) returned empty audio"))
+            throw VoxError.message(L.t("\(provider.displayName) returned empty audio", "\(provider.displayName) 返回的音频为空"))
         }
         return data
     }

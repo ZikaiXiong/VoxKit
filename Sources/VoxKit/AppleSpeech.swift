@@ -34,11 +34,11 @@ enum AppleSpeech {
     /// Recognizes a whole audio file (pair with the chunker for long audio)
     static func transcribeFile(url: URL, language: String, preferOnDevice: Bool) async throws -> String {
         guard await ensurePermission() else {
-            throw VoxError.message(L.t("未获得语音识别权限：请在「系统设置 → 隐私与安全性 → 语音识别」中允许「声记」",
-                                       "Speech recognition denied: allow VoxKit under System Settings → Privacy & Security → Speech Recognition"))
+            throw VoxError.message(L.t("Speech recognition denied: allow VoxKit under System Settings → Privacy & Security → Speech Recognition",
+                                       "未获得语音识别权限：请在「系统设置 → 隐私与安全性 → 语音识别」中允许「声记」"))
         }
         guard let recognizer = recognizer(for: language), recognizer.isAvailable else {
-            throw VoxError.message(L.t("本机语音识别当前不可用", "On-device speech recognition is unavailable"))
+            throw VoxError.message(L.t("On-device speech recognition is unavailable", "本机语音识别当前不可用"))
         }
         let request = SFSpeechURLRecognitionRequest(url: url)
         request.shouldReportPartialResults = true
@@ -77,7 +77,7 @@ enum AppleSpeech {
                         if ns.domain == "kAFAssistantErrorDomain" {
                             cont.resume(returning: "")
                         } else {
-                            cont.resume(throwing: VoxError.message(L.t("本机识别失败：", "On-device recognition failed: ") + error.localizedDescription))
+                            cont.resume(throwing: VoxError.message(L.t("On-device recognition failed: ", "本机识别失败：") + error.localizedDescription))
                         }
                     } else {
                         cont.resume(returning: text)

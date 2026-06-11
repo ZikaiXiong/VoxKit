@@ -21,62 +21,62 @@ struct ModelGuideView: View {
         switch kind {
         case .transcription:
             return [
-                Entry(service: L.t("本机识别 (Apple)", "On-Device (Apple)"), model: L.t("系统识别", "system"),
-                      price: L.t("免费 · 离线", "Free · offline"),
-                      note: L.t("快速听写首选：零成本、实时出字、隐私好；长会议准确率一般。",
-                                "Best for quick dictation: free, live text, private. Average accuracy on long meetings."),
+                Entry(service: L.t("On-Device (Apple)", "本机识别 (Apple)"), model: L.t("system", "系统识别"),
+                      price: L.t("Free · offline", "免费 · 离线"),
+                      note: L.t("Best for quick dictation: free, live text, private. Average accuracy on long meetings.",
+                                "快速听写首选：零成本、实时出字、隐私好；长会议准确率一般。"),
                       recommended: true),
                 Entry(service: "Groq", model: "whisper-large-v3-turbo",
-                      price: L.t("≈ $0.04/小时", "≈ $0.04/hr"),
-                      note: L.t("性价比之王：极快极便宜，中英文都不错，日常云端转写推荐。",
-                                "Best value: blazing fast and dirt cheap, solid for Chinese & English."),
+                      price: L.t("≈ $0.04/hr", "≈ $0.04/小时"),
+                      note: L.t("Best value: blazing fast and dirt cheap, solid for Chinese & English.",
+                                "性价比之王：极快极便宜，中英文都不错，日常云端转写推荐。"),
                       recommended: true,
                       url: "https://groq.com/pricing"),
                 Entry(service: "OpenAI", model: "gpt-4o-mini-transcribe",
-                      price: L.t("≈ $0.18/小时", "≈ $0.18/hr"),
-                      note: L.t("准确率高、口语顺滑；但对“对话式”语音偶发自由发挥。",
-                                "High accuracy and fluent output; occasionally improvises on conversational audio."),
+                      price: L.t("≈ $0.18/hr", "≈ $0.18/小时"),
+                      note: L.t("High accuracy and fluent output; occasionally improvises on conversational audio.",
+                                "准确率高、口语顺滑；但对“对话式”语音偶发自由发挥。"),
                       url: "https://platform.openai.com/docs/pricing"),
                 Entry(service: "OpenAI", model: "whisper-1 / gpt-4o-transcribe",
-                      price: L.t("≈ $0.36/小时", "≈ $0.36/hr"),
-                      note: L.t("whisper-1 老实稳定；gpt-4o-transcribe 准确率最高。",
-                                "whisper-1 is faithful and steady; gpt-4o-transcribe tops accuracy."),
+                      price: L.t("≈ $0.36/hr", "≈ $0.36/小时"),
+                      note: L.t("whisper-1 is faithful and steady; gpt-4o-transcribe tops accuracy.",
+                                "whisper-1 老实稳定；gpt-4o-transcribe 准确率最高。"),
                       url: "https://platform.openai.com/docs/pricing"),
-                Entry(service: L.t("硅基流动", "SiliconFlow"), model: "SenseVoiceSmall",
-                      price: L.t("极低 · 国内直连", "Very low cost"),
-                      note: L.t("中文识别强，国内网络友好。", "Strong Chinese recognition; great connectivity in China."),
+                Entry(service: L.t("SiliconFlow", "硅基流动"), model: "SenseVoiceSmall",
+                      price: L.t("Very low cost", "极低 · 国内直连"),
+                      note: L.t("Strong Chinese recognition; great connectivity in China.", "中文识别强，国内网络友好。"),
                       url: "https://siliconflow.cn"),
                 Entry(service: "AssemblyAI", model: "universal-3-pro",
-                      price: L.t("$0.21/小时（说话人分离 +$0.02）", "$0.21/hr (+$0.02 diarization)"),
-                      note: L.t("多人会议/采访首选：输出「说话人 A/B」分段稿，长音频免分段。直接支持英西葡法德意，其他语言（含中文）自动回退 universal-2。注册送 $50 额度。",
-                                "Best for meetings/interviews: Speaker A/B segmented output, no chunking. Native EN/ES/PT/FR/DE/IT; other languages (incl. Chinese) auto-fall back to universal-2. $50 free signup credit."),
+                      price: L.t("$0.21/hr (+$0.02 diarization)", "$0.21/小时（说话人分离 +$0.02）"),
+                      note: L.t("Best for meetings/interviews: Speaker A/B segmented output, no chunking. Native EN/ES/PT/FR/DE/IT; other languages (incl. Chinese) auto-fall back to universal-2. $50 free signup credit.",
+                                "多人会议/采访首选：输出「说话人 A/B」分段稿，长音频免分段。直接支持英西葡法德意，其他语言（含中文）自动回退 universal-2。注册送 $50 额度。"),
                       recommended: true,
                       url: "https://www.assemblyai.com/pricing"),
                 Entry(service: "AssemblyAI", model: "universal-2",
-                      price: L.t("$0.15/小时", "$0.15/hr"),
-                      note: L.t("99 种语言（含中文），同样支持说话人分离。", "99 languages incl. Chinese, also supports diarization."),
+                      price: L.t("$0.15/hr", "$0.15/小时"),
+                      note: L.t("99 languages incl. Chinese, also supports diarization.", "99 种语言（含中文），同样支持说话人分离。"),
                       url: "https://www.assemblyai.com/pricing"),
             ]
         case .tts:
             return [
-                Entry(service: L.t("系统语音 (Apple)", "System Voice (Apple)"), model: L.t("系统音色", "system voices"),
-                      price: L.t("免费 · 离线", "Free · offline"),
-                      note: L.t("零成本即用，中英文系统音色；机械感稍强。",
-                                "Zero-cost, offline, Chinese & English system voices; somewhat robotic."),
+                Entry(service: L.t("System Voice (Apple)", "系统语音 (Apple)"), model: L.t("system voices", "系统音色"),
+                      price: L.t("Free · offline", "免费 · 离线"),
+                      note: L.t("Zero-cost, offline, Chinese & English system voices; somewhat robotic.",
+                                "零成本即用，中英文系统音色；机械感稍强。"),
                       recommended: true),
                 Entry(service: "OpenAI", model: "gpt-4o-mini-tts",
-                      price: L.t("≈ $0.015/分钟音频", "≈ $0.015/min of audio"),
-                      note: L.t("自然度高、10 种音色，中英文皆佳——云端首选。",
-                                "Very natural, 10 voices, great in Chinese & English — top cloud pick."),
+                      price: L.t("≈ $0.015/min of audio", "≈ $0.015/分钟音频"),
+                      note: L.t("Very natural, 10 voices, great in Chinese & English — top cloud pick.",
+                                "自然度高、10 种音色，中英文皆佳——云端首选。"),
                       recommended: true,
                       url: "https://platform.openai.com/docs/pricing"),
-                Entry(service: L.t("硅基流动", "SiliconFlow"), model: "CosyVoice2-0.5B",
-                      price: L.t("极低 · 国内直连", "Very low cost"),
-                      note: L.t("中文自然度好，价格便宜。", "Natural Chinese output at a low price."),
+                Entry(service: L.t("SiliconFlow", "硅基流动"), model: "CosyVoice2-0.5B",
+                      price: L.t("Very low cost", "极低 · 国内直连"),
+                      note: L.t("Natural Chinese output at a low price.", "中文自然度好，价格便宜。"),
                       url: "https://siliconflow.cn"),
                 Entry(service: "Groq", model: "playai-tts",
-                      price: L.t("低价 · 极快", "Low cost · very fast"),
-                      note: L.t("英文为主，生成速度快。", "English-focused, very fast generation."),
+                      price: L.t("Low cost · very fast", "低价 · 极快"),
+                      note: L.t("English-focused, very fast generation.", "英文为主，生成速度快。"),
                       url: "https://groq.com/pricing"),
             ]
         }
@@ -85,8 +85,8 @@ struct ModelGuideView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(kind == .transcription
-                  ? L.t("转写模型怎么选？", "Which transcription model?")
-                  : L.t("语音模型怎么选？", "Which voice model?"),
+                  ? L.t("Which transcription model?", "转写模型怎么选？")
+                  : L.t("Which voice model?", "语音模型怎么选？"),
                   systemImage: "lightbulb.fill")
                 .font(.headline)
 
@@ -97,7 +97,7 @@ struct ModelGuideView: View {
                             Text(entry.service).font(.callout.weight(.semibold))
                             Text(entry.model).font(.caption.monospaced()).foregroundStyle(.secondary)
                             if entry.recommended {
-                                TagChip(text: L.t("推荐", "Pick"), color: .green)
+                                TagChip(text: L.t("Pick", "推荐"), color: .green)
                             }
                         }
                         Text(entry.note)
@@ -115,7 +115,7 @@ struct ModelGuideView: View {
                                 NSWorkspace.shared.open(url)
                             } label: {
                                 HStack(spacing: 2) {
-                                    Text(L.t("官网", "Site"))
+                                    Text(L.t("Site", "官网"))
                                     Image(systemName: "arrow.up.right")
                                 }
                                 .font(.caption2)
@@ -130,8 +130,8 @@ struct ModelGuideView: View {
                 if entry.id != entries.last?.id { Divider() }
             }
 
-            Text(L.t("价格为约数（2026-06 核对），以各服务官网为准。",
-                     "Prices are approximate (checked 2026-06); see each vendor's site."))
+            Text(L.t("Prices are approximate (checked 2026-06); see each vendor's site.",
+                     "价格为约数（2026-06 核对），以各服务官网为准。"))
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
         }
@@ -153,7 +153,7 @@ struct ModelGuideButton: View {
                 .foregroundStyle(.secondary)
         }
         .buttonStyle(.borderless)
-        .help(L.t("模型价格与场景推荐", "Model prices & recommendations"))
+        .help(L.t("Model prices & recommendations", "模型价格与场景推荐"))
         .popover(isPresented: $showing, arrowEdge: .bottom) {
             ModelGuideView(kind: kind)
         }

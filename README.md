@@ -2,8 +2,9 @@
 
 A macOS menu-bar speech-to-text app: quick dictation + meeting transcription, multiple
 transcription models, AI proofreading, and a lexicon that learns your corrections.
-Interface in English and 中文. By [Zikai Xiong](https://zikaixiong.github.io),
-vibe-coded with Claude (Fable 5). Currently in 0.x — expect rough edges.
+Interface in English, 简体中文, Español, Français, and 日本語.
+By [Zikai Xiong](https://zikaixiong.github.io), built with Claude (Fable 5).
+Currently in 0.x — expect rough edges.
 
 ## Features
 
