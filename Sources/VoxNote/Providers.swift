@@ -20,31 +20,31 @@ struct Provider: Identifiable, Hashable {
 
 enum Providers {
     static let appleLocal = Provider(
-        id: "apple", name: "本机识别 (Apple)", needsKey: false,
+        id: "apple", name: "On-Device (Apple)", needsKey: false,
         defaultBaseURL: "", models: ["on-device"],
         supportsPrompt: false, defaultChunkSeconds: 55, maxUploadMB: .infinity,
-        icon: "apple.logo", keyHint: "系统自带语音识别，离线免费，无需密钥；适合快速听写。")
+        icon: "apple.logo", keyHint: "Built-in speech recognition. Free, offline, no key needed.")
 
     static let openai = Provider(
         id: "openai", name: "OpenAI", needsKey: true,
         defaultBaseURL: "https://api.openai.com/v1",
         models: ["gpt-4o-mini-transcribe", "gpt-4o-transcribe", "whisper-1"],
         supportsPrompt: true, defaultChunkSeconds: 600, maxUploadMB: 25,
-        icon: "sparkle", keyHint: "在 platform.openai.com 获取 API Key。单文件上限 25MB。")
+        icon: "sparkle", keyHint: "Get an API key at platform.openai.com. 25MB per file.")
 
     static let groq = Provider(
         id: "groq", name: "Groq", needsKey: true,
         defaultBaseURL: "https://api.groq.com/openai/v1",
         models: ["whisper-large-v3-turbo", "whisper-large-v3"],
         supportsPrompt: true, defaultChunkSeconds: 600, maxUploadMB: 25,
-        icon: "bolt.horizontal.fill", keyHint: "在 console.groq.com 获取 API Key，速度极快、有免费额度。")
+        icon: "bolt.horizontal.fill", keyHint: "Get an API key at console.groq.com. Fast, free tier available.")
 
     static let siliconflow = Provider(
-        id: "siliconflow", name: "硅基流动 SiliconFlow", needsKey: true,
+        id: "siliconflow", name: "SiliconFlow", needsKey: true,
         defaultBaseURL: "https://api.siliconflow.cn/v1",
         models: ["FunAudioLLM/SenseVoiceSmall"],
         supportsPrompt: false, defaultChunkSeconds: 300, maxUploadMB: 25,
-        icon: "cloud.fill", keyHint: "在 siliconflow.cn 获取 API Key，国内直连，中文效果好。")
+        icon: "cloud.fill", keyHint: "Get an API key at siliconflow.cn. Great for Chinese.")
 
     // Async REST API (upload → create → poll); handles hours-long audio natively, so no chunking
     static let assemblyai = Provider(
@@ -56,11 +56,11 @@ enum Providers {
         keyHint: "AssemblyAI key — meeting-grade transcription with speaker diarization.")
 
     static let custom = Provider(
-        id: "custom", name: "自定义（OpenAI 兼容）", needsKey: true,
+        id: "custom", name: "Custom (OpenAI-compatible)", needsKey: true,
         defaultBaseURL: "",
         models: [],
         supportsPrompt: true, defaultChunkSeconds: 600, maxUploadMB: 25,
-        icon: "wrench.and.screwdriver.fill", keyHint: "任何 OpenAI 兼容的 /audio/transcriptions 服务，在「高级」里填地址和模型名。")
+        icon: "wrench.and.screwdriver.fill", keyHint: "Any OpenAI-compatible /audio/transcriptions service.")
 
     static let all: [Provider] = [appleLocal, openai, groq, siliconflow, assemblyai, custom]
     static let cloud: [Provider] = [openai, groq, siliconflow, assemblyai, custom]

@@ -23,6 +23,9 @@ enum LanguageChoice: String, Codable, CaseIterable, Identifiable {
     case auto
     case zh
     case en
+    case es
+    case fr
+    case ja
 
     var id: String { rawValue }
     var label: String {
@@ -30,6 +33,9 @@ enum LanguageChoice: String, Codable, CaseIterable, Identifiable {
         case .auto: return L.t("自动检测", "Auto Detect")
         case .zh: return "中文"
         case .en: return "English"
+        case .es: return "Español"
+        case .fr: return "Français"
+        case .ja: return "日本語"
         }
     }
     /// `language` parameter sent to cloud APIs; omitted when auto-detecting

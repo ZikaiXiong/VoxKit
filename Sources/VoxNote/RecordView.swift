@@ -101,11 +101,6 @@ private struct RecordContent: View {
                      : L.t("点击开始会议录音，支持暂停、超长自动分段",
                            "Click to start a meeting recording — pausable, long audio auto-splits"))
                     .foregroundStyle(.secondary)
-                if state.uiMode == .quick {
-                    Text(L.t("结果自动复制到剪贴板，可直接粘贴", "Result is copied to the clipboard automatically"))
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
                 inFlightProgress
             }
         case .recording:

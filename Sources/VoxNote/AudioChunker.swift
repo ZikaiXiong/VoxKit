@@ -16,7 +16,7 @@ enum AudioChunker {
     static func prepareChunks(source: URL, maxChunkSeconds: Double) throws -> [AudioChunk] {
         let src = try AVAudioFile(forReading: source)
         let sr = src.processingFormat.sampleRate
-        guard sr > 0, src.length > 0 else { throw VoxError.message("音频文件无法读取或为空") }
+        guard sr > 0, src.length > 0 else { throw VoxError.message(L.t("音频文件无法读取或为空", "Audio file is unreadable or empty")) }
         let total = Double(src.length) / sr
 
         // Short enough: use the original file as-is
@@ -58,7 +58,7 @@ enum AudioChunker {
             try writeSegment(of: src, from: s, to: e, into: url)
             chunks.append(AudioChunk(url: url, start: s, duration: e - s, isTemporary: true))
         }
-        guard !chunks.isEmpty else { throw VoxError.message("音频切割失败") }
+        guard !chunks.isEmpty else { throw VoxError.message(L.t("音频切割失败", "Audio splitting failed")) }
         return chunks
     }
 
@@ -86,7 +86,7 @@ enum AudioChunker {
         let sr = file.processingFormat.sampleRate
         let block = AVAudioFrameCount(sr * probe)
         guard let buf = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: block) else {
-            throw VoxError.message("音频缓冲分配失败")
+            throw VoxError.message(L.t("音频缓冲分配失败", "Audio buffer allocation failed"))
         }
         var profile: [Float] = []
         file.framePosition = 0
@@ -123,7 +123,7 @@ enum AudioChunker {
         ]
         let outFile = try AVAudioFile(forWriting: url, settings: settings, commonFormat: .pcmFormatInt16, interleaved: true)
         guard let converter = AVAudioConverter(from: src.processingFormat, to: outFormat) else {
-            throw VoxError.message("音频格式转换器创建失败")
+            throw VoxError.message(L.t("音频格式转换器创建失败", "Could not create the audio converter"))
         }
         let startFrame = AVAudioFramePosition(start * sr)
         var remaining = AVAudioFrameCount(max(0, (end - start) * sr))
@@ -131,7 +131,7 @@ enum AudioChunker {
 
         let blockFrames: AVAudioFrameCount = 32768
         guard let inBuf = AVAudioPCMBuffer(pcmFormat: src.processingFormat, frameCapacity: blockFrames) else {
-            throw VoxError.message("音频缓冲分配失败")
+            throw VoxError.message(L.t("音频缓冲分配失败", "Audio buffer allocation failed"))
         }
         let ratio = 16000.0 / sr
         while remaining > 0 {
@@ -151,7 +151,7 @@ enum AudioChunker {
                 inputStatus.pointee = .haveData
                 return inBuf
             }
-            if status == .error { throw convError ?? VoxError.message("音频转换失败") }
+            if status == .error { throw convError ?? VoxError.message(L.t("音频转换失败", "Audio conversion failed")) }
             if outBuf.frameLength > 0 { try outFile.write(from: outBuf) }
         }
     }
