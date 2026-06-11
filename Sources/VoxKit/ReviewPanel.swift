@@ -65,10 +65,10 @@ struct ReviewView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                Text(L.t("已复制 — 需要修改吗？", "Copied — want to touch it up?"))
+                Text(L.t("Copied — want to touch it up?", "已复制 — 需要修改吗？"))
                     .font(.callout.weight(.semibold))
                 Spacer()
-                Text(L.t("\(editedText.count) 字", "\(editedText.count) chars"))
+                Text(L.t("\(editedText.count) chars", "\(editedText.count) 字"))
                     .font(.caption2).foregroundStyle(.tertiary)
             }
 
@@ -88,12 +88,12 @@ struct ReviewView: View {
 
             HStack {
                 Text(edited
-                     ? L.t("修改会重新复制，并让词典学习你的改法", "Edits are re-copied and taught to the lexicon")
-                     : L.t("可直接去目标输入框 ⌘V 粘贴", "You can already ⌘V into your target app"))
+                     ? L.t("Edits are re-copied and taught to the lexicon", "修改会重新复制，并让词典学习你的改法")
+                     : L.t("You can already ⌘V into your target app", "可直接去目标输入框 ⌘V 粘贴"))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                 Spacer()
-                Button(L.t("放弃", "Dismiss")) {
+                Button(L.t("Dismiss", "放弃")) {
                     state.finishReview(editedText: nil)
                 }
                 .keyboardShortcut(.cancelAction)
@@ -130,8 +130,8 @@ struct ReviewView: View {
 
     private var buttonTitle: String {
         let base = edited
-            ? L.t("复制修改并学习", "Copy edits & learn")
-            : L.t("完成", "Done")
+            ? L.t("Copy edits & learn", "复制修改并学习")
+            : L.t("Done", "完成")
         if let c = countdown, !edited {
             return base + " (\(c))"
         }

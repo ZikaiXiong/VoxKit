@@ -18,10 +18,10 @@ private struct LexiconContent: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Text(L.t("词典", "Lexicon"))
+                Text(L.t("Lexicon", "词典"))
                     .font(.title2.weight(.semibold))
-                Text(L.t("出现 2 次的改法自动生效，用于自动修正与热词。",
-                         "A fix seen twice becomes active, powering auto-correction and hotwords."))
+                Text(L.t("A fix seen twice becomes active, powering auto-correction and hotwords.",
+                         "出现 2 次的改法自动生效，用于自动修正与热词。"))
                     .font(.callout)
                     .foregroundStyle(.secondary)
 
@@ -41,18 +41,18 @@ private struct LexiconContent: View {
     private var rulesSection: some View {
         Card {
             VStack(alignment: .leading, spacing: 10) {
-                Label(L.t("修正规则（识别错 → 应该是）", "Correction rules (wrong → right)"), systemImage: "wand.and.stars")
+                Label(L.t("Correction rules (wrong → right)", "修正规则（识别错 → 应该是）"), systemImage: "wand.and.stars")
                     .font(.headline)
 
                 HStack(spacing: 8) {
-                    TextField(L.t("识别成了…", "Recognized as…"), text: $newOriginal)
+                    TextField(L.t("Recognized as…", "识别成了…"), text: $newOriginal)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 160)
                     Image(systemName: "arrow.right").foregroundStyle(.secondary)
-                    TextField(L.t("应该是…", "Should be…"), text: $newReplacement)
+                    TextField(L.t("Should be…", "应该是…"), text: $newReplacement)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 160)
-                    Button(L.t("添加", "Add")) {
+                    Button(L.t("Add", "添加")) {
                         store.addManualRule(original: newOriginal, replacement: newReplacement)
                         newOriginal = ""; newReplacement = ""
                     }
@@ -62,8 +62,8 @@ private struct LexiconContent: View {
                 }
 
                 if store.lexicon.rules.isEmpty {
-                    Text(L.t("还没有规则——在「历史」里改完文本点「保存修正并学习」即可积累。",
-                             "No rules yet — edit a transcript under History and click “Save & Learn”."))
+                    Text(L.t("No rules yet — edit a transcript under History and click “Save & Learn”.",
+                             "还没有规则——在「历史」里改完文本点「保存修正并学习」即可积累。"))
                         .captionStyle()
                         .padding(.vertical, 8)
                 } else {
@@ -85,11 +85,11 @@ private struct LexiconContent: View {
                                 Text(rule.replacement).fontWeight(.medium)
 
                                 if rule.isManual {
-                                    TagChip(text: L.t("手动", "Manual"), color: .blue)
+                                    TagChip(text: L.t("Manual", "手动"), color: .blue)
                                 } else if rule.isActive {
-                                    TagChip(text: L.t("已生效 · 学习 \(rule.count) 次", "Active · learned ×\(rule.count)"), color: .green)
+                                    TagChip(text: L.t("Active · learned ×\(rule.count)", "已生效 · 学习 \(rule.count) 次"), color: .green)
                                 } else {
-                                    TagChip(text: L.t("再出现 \(max(0, 2 - rule.count)) 次后生效", "Active after \(max(0, 2 - rule.count)) more"), color: .orange)
+                                    TagChip(text: L.t("Active after \(max(0, 2 - rule.count)) more", "再出现 \(max(0, 2 - rule.count)) 次后生效"), color: .orange)
                                 }
 
                                 Spacer()
@@ -115,21 +115,21 @@ private struct LexiconContent: View {
     private var hotwordsSection: some View {
         Card {
             VStack(alignment: .leading, spacing: 10) {
-                Label(L.t("热词（专有名词、人名、术语）", "Hotwords (proper nouns, names, jargon)"), systemImage: "flame")
+                Label(L.t("Hotwords (proper nouns, names, jargon)", "热词（专有名词、人名、术语）"), systemImage: "flame")
                     .font(.headline)
-                    .help(L.t("注入转写模型与 AI 修正，让专有名词从源头拼对",
-                              "Injected into transcription and AI correction so these terms come out right"))
+                    .help(L.t("Injected into transcription and AI correction so these terms come out right",
+                              "注入转写模型与 AI 修正，让专有名词从源头拼对"))
 
                 HStack {
-                    TextField(L.t("输入热词后回车", "Type a hotword and press Return"), text: $newHotword)
+                    TextField(L.t("Type a hotword and press Return", "输入热词后回车"), text: $newHotword)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 220)
                         .onSubmit { addHotword() }
-                    Button(L.t("添加", "Add")) { addHotword() }
+                    Button(L.t("Add", "添加")) { addHotword() }
                         .disabled(newHotword.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
 
-                FlowChips(items: store.lexicon.hotwords, emptyHint: L.t("暂无热词", "No hotwords yet")) { word in
+                FlowChips(items: store.lexicon.hotwords, emptyHint: L.t("No hotwords yet", "暂无热词")) { word in
                     HStack(spacing: 4) {
                         Text(word)
                         Button {
@@ -160,7 +160,7 @@ private struct LexiconContent: View {
         Card {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Label(L.t("高频词（从你的转写里自动统计）", "Frequent words (mined from your transcripts)"), systemImage: "chart.bar.fill")
+                    Label(L.t("Frequent words (mined from your transcripts)", "高频词（从你的转写里自动统计）"), systemImage: "chart.bar.fill")
                         .font(.headline)
                     Spacer()
                     Button {
@@ -171,7 +171,7 @@ private struct LexiconContent: View {
                     .buttonStyle(.borderless)
                 }
                 FlowChips(items: candidates.map { "\($0.0)|\($0.1)" },
-                          emptyHint: L.t("录音多了之后这里会出现你的高频词", "Your frequent words will appear here as you record more")) { packed in
+                          emptyHint: L.t("Your frequent words will appear here as you record more", "录音多了之后这里会出现你的高频词")) { packed in
                     let parts = packed.split(separator: "|")
                     let word = String(parts.first ?? "")
                     let count = parts.count > 1 ? String(parts[1]) : ""

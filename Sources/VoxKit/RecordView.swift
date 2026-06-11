@@ -96,27 +96,27 @@ private struct RecordContent: View {
         case .idle:
             VStack(spacing: 5) {
                 Text(state.uiMode == .quick
-                     ? L.t("点击开始，或在任何地方按 \(HotkeyPreset.current().label)",
-                           "Click to start, or press \(HotkeyPreset.current().label) anywhere")
-                     : L.t("点击开始会议录音，支持暂停、超长自动分段",
-                           "Click to start a meeting recording — pausable, long audio auto-splits"))
+                     ? L.t("Click to start, or press \(HotkeyPreset.current().label) anywhere",
+                           "点击开始，或在任何地方按 \(HotkeyPreset.current().label)")
+                     : L.t("Click to start a meeting recording — pausable, long audio auto-splits",
+                           "点击开始会议录音，支持暂停、超长自动分段"))
                     .foregroundStyle(.secondary)
                 inFlightProgress
             }
         case .recording:
             Text(!recorder.isReceivingAudio
-                 ? L.t("正在启动麦克风…", "Starting the microphone…")
+                 ? L.t("Starting the microphone…", "正在启动麦克风…")
                  : (state.activeMode == .quick && !state.liveText.isEmpty
                     ? state.liveText
-                    : L.t("正在录音…", "Recording…")))
+                    : L.t("Recording…", "正在录音…")))
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
                 .frame(maxWidth: 520)
                 .multilineTextAlignment(.center)
         case .paused:
-            Text(L.t("已暂停", "Paused")).foregroundStyle(.orange)
+            Text(L.t("Paused", "已暂停")).foregroundStyle(.orange)
         case .processing:
-            Text(state.processingDetail ?? L.t("正在转写…", "Transcribing…")).foregroundStyle(.secondary)
+            Text(state.processingDetail ?? L.t("Transcribing…", "正在转写…")).foregroundStyle(.secondary)
         case .done(let msg, let ok):
             Label(msg, systemImage: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .foregroundStyle(ok ? Color.green : Color.red)
@@ -130,9 +130,9 @@ private struct RecordContent: View {
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
                 Text(progress.label ?? (progress.total > 1
-                     ? L.t("后台转写中 · 第 \(min(progress.done + 1, progress.total))/\(progress.total) 段",
-                           "Transcribing in background · chunk \(min(progress.done + 1, progress.total))/\(progress.total)")
-                     : L.t("后台转写中…", "Transcribing in background…")))
+                     ? L.t("Transcribing in background · chunk \(min(progress.done + 1, progress.total))/\(progress.total)",
+                           "后台转写中 · 第 \(min(progress.done + 1, progress.total))/\(progress.total) 段")
+                     : L.t("Transcribing in background…", "后台转写中…")))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -145,7 +145,7 @@ private struct RecordContent: View {
             Button {
                 state.pauseOrResume()
             } label: {
-                Label(state.phase == .paused ? L.t("继续", "Resume") : L.t("暂停", "Pause"),
+                Label(state.phase == .paused ? L.t("Resume", "继续") : L.t("Pause", "暂停"),
                       systemImage: state.phase == .paused ? "play.fill" : "pause.fill")
                     .frame(width: 84)
             }
@@ -154,7 +154,7 @@ private struct RecordContent: View {
             Button(role: .destructive) {
                 state.cancelRecording()
             } label: {
-                Label(L.t("放弃", "Discard"), systemImage: "trash").frame(width: 84)
+                Label(L.t("Discard", "放弃"), systemImage: "trash").frame(width: 84)
             }
             .controlSize(.large)
         }
@@ -168,12 +168,12 @@ private struct RecordContent: View {
                 HStack(spacing: 18) {
                     // Microphone picker (prominent; hot-plug aware)
                     Picker(selection: $state.micUID) {
-                        Label(L.t("系统默认", "System Default"), systemImage: "mic").tag("")
+                        Label(L.t("System Default", "系统默认"), systemImage: "mic").tag("")
                         ForEach(audioDevices.devices) { d in
                             Text(d.name).tag(d.id)
                         }
                     } label: {
-                        Label(L.t("麦克风", "Microphone"), systemImage: "mic.fill")
+                        Label(L.t("Microphone", "麦克风"), systemImage: "mic.fill")
                     }
                     .frame(maxWidth: 320)
 
@@ -183,7 +183,7 @@ private struct RecordContent: View {
                 }
                 Divider()
                 HStack(spacing: 18) {
-                    Picker(L.t("服务", "Service"), selection: state.providerBinding) {
+                    Picker(L.t("Service", "服务"), selection: state.providerBinding) {
                         ForEach(Providers.all) { p in
                             Text(p.displayName).tag(p.id)
                         }
@@ -191,18 +191,18 @@ private struct RecordContent: View {
                     .fixedSize()
 
                     if state.provider.id != "apple" {
-                        Picker(L.t("模型", "Model"), selection: state.modelBinding) {
+                        Picker(L.t("Model", "模型"), selection: state.modelBinding) {
                             ForEach(ProviderConfig.models(state.provider), id: \.self) { m in
                                 Text(m).tag(m)
                             }
                             if ProviderConfig.models(state.provider).isEmpty {
-                                Text(L.t("未配置", "Not set")).tag("")
+                                Text(L.t("Not set", "未配置")).tag("")
                             }
                         }
                         .fixedSize()
                     }
 
-                    Picker(L.t("语言", "Language"), selection: $state.language) {
+                    Picker(L.t("Language", "语言"), selection: $state.language) {
                         ForEach(LanguageChoice.allCases) { l in
                             Text(l.label).tag(l)
                         }
@@ -214,7 +214,7 @@ private struct RecordContent: View {
                     Spacer()
 
                     if AICorrector.autoEnabled && AICorrector.isConfigured {
-                        TagChip(text: L.t("AI 修正已开启", "AI correction on"), color: .indigo)
+                        TagChip(text: L.t("AI correction on", "AI 修正已开启"), color: .indigo)
                     }
                 }
             }
@@ -226,17 +226,17 @@ private struct RecordContent: View {
     private var keyStatus: some View {
         if state.provider.needsKey {
             if Keychain.has(account: state.provider.id) {
-                TagChip(text: L.t("密钥已配置", "Key configured"), color: .green)
+                TagChip(text: L.t("Key configured", "密钥已配置"), color: .green)
             } else {
                 Button {
                     state.selectedPage = .settings
                 } label: {
-                    TagChip(text: L.t("缺少 API Key，点此配置", "No API key — click to set up"), color: .orange)
+                    TagChip(text: L.t("No API key — click to set up", "缺少 API Key，点此配置"), color: .orange)
                 }
                 .buttonStyle(.plain)
             }
         } else {
-            TagChip(text: L.t("离线 · 免费", "Offline · Free"), color: .blue)
+            TagChip(text: L.t("Offline · Free", "离线 · 免费"), color: .blue)
         }
     }
 }

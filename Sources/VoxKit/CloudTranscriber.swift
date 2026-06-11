@@ -6,19 +6,19 @@ enum CloudTranscriber {
                            language: String?, prompt: String?) async throws -> String {
         let base = ProviderConfig.baseURL(provider).trimmingCharacters(in: .whitespaces)
         guard !base.isEmpty else {
-            throw VoxError.message(L.t("\(provider.displayName) 没有配置 API 地址，请到「设置」填写",
-                                       "\(provider.displayName) has no API URL. Set it in Settings."))
+            throw VoxError.message(L.t("\(provider.displayName) has no API URL. Set it in Settings.",
+                                       "\(provider.displayName) 没有配置 API 地址，请到「设置」填写"))
         }
         let endpoint = base.hasSuffix("/") ? base + "audio/transcriptions" : base + "/audio/transcriptions"
         guard let url = URL(string: endpoint) else {
-            throw VoxError.message(L.t("API 地址无效：\(endpoint)", "Invalid API URL: \(endpoint)"))
+            throw VoxError.message(L.t("Invalid API URL: \(endpoint)", "API 地址无效：\(endpoint)"))
         }
         guard let key = Keychain.get(account: provider.id), !key.isEmpty else {
-            throw VoxError.message(L.t("\(provider.displayName) 还没有配置 API Key，请到「设置」填写",
-                                       "\(provider.displayName) has no API key. Add one in Settings."))
+            throw VoxError.message(L.t("\(provider.displayName) has no API key. Add one in Settings.",
+                                       "\(provider.displayName) 还没有配置 API Key，请到「设置」填写"))
         }
         guard !model.isEmpty else {
-            throw VoxError.message(L.t("\(provider.displayName) 没有选择模型", "\(provider.displayName) has no model selected"))
+            throw VoxError.message(L.t("\(provider.displayName) has no model selected", "\(provider.displayName) 没有选择模型"))
         }
 
         var request = URLRequest(url: url)
@@ -56,7 +56,7 @@ enum CloudTranscriber {
 
         let (data, response) = try await URLSession.shared.upload(for: request, from: body)
         guard let http = response as? HTTPURLResponse else {
-            throw VoxError.message(L.t("\(provider.displayName) 无响应", "No response from \(provider.displayName)"))
+            throw VoxError.message(L.t("No response from \(provider.displayName)", "\(provider.displayName) 无响应"))
         }
         guard http.statusCode == 200 else {
             var message = String(data: data, encoding: .utf8) ?? ""
@@ -74,7 +74,7 @@ enum CloudTranscriber {
         if let text = String(data: data, encoding: .utf8), !text.isEmpty {
             return text   // some services return plain text directly
         }
-        throw VoxError.message(L.t("无法解析 \(provider.displayName) 的转写结果", "Could not parse response from \(provider.displayName)"))
+        throw VoxError.message(L.t("Could not parse response from \(provider.displayName)", "无法解析 \(provider.displayName) 的转写结果"))
     }
 }
 

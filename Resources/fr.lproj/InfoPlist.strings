@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "VoxKit";
+"NSMicrophoneUsageDescription" = "VoxKit a besoin du microphone pour enregistrer et transcrire la voix.";
+"NSSpeechRecognitionUsageDescription" = "VoxKit utilise la reconnaissance vocale du système pour la transcription locale.";

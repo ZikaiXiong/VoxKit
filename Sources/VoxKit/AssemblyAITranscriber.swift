@@ -6,12 +6,12 @@ enum AssemblyAITranscriber {
     static func transcribe(fileURL: URL, provider: Provider, model: String,
                            language: String?, diarize: Bool) async throws -> String {
         guard let key = Keychain.get(account: provider.id), !key.isEmpty else {
-            throw VoxError.message(L.t("\(provider.displayName) 还没有配置 API Key，请到「设置」填写",
-                                       "\(provider.displayName) has no API key. Add one in Settings."))
+            throw VoxError.message(L.t("\(provider.displayName) has no API key. Add one in Settings.",
+                                       "\(provider.displayName) 还没有配置 API Key，请到「设置」填写"))
         }
         let base = ProviderConfig.baseURL(provider).trimmingCharacters(in: .whitespaces)
         guard let baseURL = URL(string: base.hasSuffix("/") ? String(base.dropLast()) : base) else {
-            throw VoxError.message(L.t("API 地址无效：\(base)", "Invalid API URL: \(base)"))
+            throw VoxError.message(L.t("Invalid API URL: \(base)", "API 地址无效：\(base)"))
         }
 
         // 1. Upload audio (streamed from disk — meeting files can be hundreds of MB)
@@ -24,7 +24,7 @@ enum AssemblyAITranscriber {
         guard (uploadResponse as? HTTPURLResponse)?.statusCode == 200,
               let uploadJSON = try? JSONSerialization.jsonObject(with: uploadData) as? [String: Any],
               let audioURL = uploadJSON["upload_url"] as? String else {
-            throw VoxError.message(apiError(from: uploadData, fallback: L.t("AssemblyAI 上传失败", "AssemblyAI upload failed")))
+            throw VoxError.message(apiError(from: uploadData, fallback: L.t("AssemblyAI upload failed", "AssemblyAI 上传失败")))
         }
 
         // 2. Create the transcription job.
@@ -51,7 +51,7 @@ enum AssemblyAITranscriber {
         guard let createHTTP = createResponse as? HTTPURLResponse, createHTTP.statusCode == 200,
               let createJSON = try? JSONSerialization.jsonObject(with: createData) as? [String: Any],
               let jobID = createJSON["id"] as? String else {
-            throw VoxError.message(apiError(from: createData, fallback: L.t("AssemblyAI 创建任务失败", "AssemblyAI job creation failed")))
+            throw VoxError.message(apiError(from: createData, fallback: L.t("AssemblyAI job creation failed", "AssemblyAI 创建任务失败")))
         }
 
         // 3. Poll until completed (audio is processed at a multiple of real time)
@@ -60,7 +60,7 @@ enum AssemblyAITranscriber {
         while true {
             try Task.checkCancellation()
             guard Date() < deadline else {
-                throw VoxError.message(L.t("AssemblyAI 处理超时", "AssemblyAI processing timed out"))
+                throw VoxError.message(L.t("AssemblyAI processing timed out", "AssemblyAI 处理超时"))
             }
             try? await Task.sleep(nanoseconds: 3_000_000_000)
 
@@ -74,7 +74,7 @@ enum AssemblyAITranscriber {
             case "completed":
                 return format(json, diarized: diarize)
             case "error":
-                let message = json["error"] as? String ?? L.t("未知错误", "unknown error")
+                let message = json["error"] as? String ?? L.t("unknown error", "未知错误")
                 throw VoxError.message("AssemblyAI: \(message)")
             default:
                 continue   // queued / processing
@@ -93,7 +93,7 @@ enum AssemblyAITranscriber {
                 let speaker = (u["speaker"] as? String) ?? "?"
                 let startMS = (u["start"] as? Int) ?? 0
                 let stamp = Format.mmss(Double(startMS) / 1000)
-                return "[\(stamp)] \(L.t("说话人", "Speaker")) \(speaker)\(L.t("：", ": "))\(text)"
+                return "[\(stamp)] \(L.t("Speaker", "说话人")) \(speaker)\(L.t(": ", "："))\(text)"
             }
             if !lines.isEmpty { return lines.joined(separator: "\n\n") }
         }

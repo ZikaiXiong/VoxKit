@@ -58,8 +58,8 @@ private struct SpeakContent: View {
                     .frame(minHeight: 110, maxHeight: 180)
                     .overlay(alignment: .topLeading) {
                         if text.isEmpty {
-                            Text(L.t("输入要转成语音的文字…（中英文皆可）",
-                                     "Type the text to turn into speech… (Chinese or English)"))
+                            Text(L.t("Type the text to turn into speech… (Chinese or English)",
+                                     "输入要转成语音的文字…（中英文皆可）"))
                                 .foregroundStyle(.tertiary)
                                 .padding(.top, 8)
                                 .padding(.leading, 5)
@@ -67,13 +67,13 @@ private struct SpeakContent: View {
                         }
                     }
                 HStack {
-                    Text(L.t("\(text.count) 字", "\(text.count) chars"))
+                    Text(L.t("\(text.count) chars", "\(text.count) 字"))
                         .font(.caption)
                         .foregroundStyle(text.count > TTSEngine.maxInputLength && providerID != TTSEngine.systemID
                                          ? AnyShapeStyle(.orange) : AnyShapeStyle(.tertiary))
                     Spacer()
                     if !text.isEmpty {
-                        Button(L.t("清空", "Clear")) { text = "" }
+                        Button(L.t("Clear", "清空")) { text = "" }
                             .controlSize(.small)
                     }
                 }
@@ -87,7 +87,7 @@ private struct SpeakContent: View {
         Card {
             VStack(spacing: 10) {
                 HStack(spacing: 16) {
-                    Picker(L.t("服务", "Service"), selection: $providerID) {
+                    Picker(L.t("Service", "服务"), selection: $providerID) {
                         ForEach(TTSEngine.providerIDs, id: \.self) { id in
                             Text(TTSEngine.name(id)).tag(id)
                         }
@@ -107,7 +107,7 @@ private struct SpeakContent: View {
                     modelControl
 
                     HStack(spacing: 6) {
-                        Text(L.t("语速", "Speed")).foregroundStyle(.secondary)
+                        Text(L.t("Speed", "语速")).foregroundStyle(.secondary)
                         Slider(value: $speed, in: 0.5...2.0, step: 0.1)
                             .frame(width: 130)
                         Text(String(format: "%.1f×", speed))
@@ -115,7 +115,7 @@ private struct SpeakContent: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Toggle(L.t("生成后自动朗读", "Speak after generating"), isOn: $autoSpeak)
+                    Toggle(L.t("Speak after generating", "生成后自动朗读"), isOn: $autoSpeak)
 
                     Spacer()
 
@@ -128,21 +128,21 @@ private struct SpeakContent: View {
     @ViewBuilder
     private var voiceControl: some View {
         if providerID == TTSEngine.systemID {
-            Picker(L.t("音色", "Voice"), selection: voiceBinding) {
-                Text(L.t("默认", "Default")).tag("")
+            Picker(L.t("Voice", "音色"), selection: voiceBinding) {
+                Text(L.t("Default", "默认")).tag("")
                 ForEach(TTSEngine.systemVoices(), id: \.identifier) { v in
                     Text("\(v.name) (\(v.language))").tag(v.identifier)
                 }
             }
             .frame(maxWidth: 300)
         } else if providerID == "openai" {
-            Picker(L.t("音色", "Voice"), selection: voiceBinding) {
+            Picker(L.t("Voice", "音色"), selection: voiceBinding) {
                 ForEach(TTSEngine.openAIVoices, id: \.self) { Text($0).tag($0) }
             }
             .fixedSize()
         } else {
             HStack(spacing: 6) {
-                Text(L.t("音色", "Voice")).foregroundStyle(.secondary)
+                Text(L.t("Voice", "音色")).foregroundStyle(.secondary)
                 TextField(TTSEngine.defaultVoice(providerID), text: voiceBinding)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 220)
@@ -154,7 +154,7 @@ private struct SpeakContent: View {
     private var modelControl: some View {
         if providerID != TTSEngine.systemID {
             HStack(spacing: 6) {
-                Text(L.t("模型", "Model")).foregroundStyle(.secondary)
+                Text(L.t("Model", "模型")).foregroundStyle(.secondary)
                 TextField(TTSEngine.defaultModel(providerID), text: modelBinding)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 200)
@@ -176,17 +176,17 @@ private struct SpeakContent: View {
     private var keyStatus: some View {
         if TTSEngine.needsKey(providerID) {
             if Keychain.has(account: providerID) {
-                TagChip(text: L.t("密钥已配置", "Key configured"), color: .green)
+                TagChip(text: L.t("Key configured", "密钥已配置"), color: .green)
             } else {
                 Button {
                     state.selectedPage = .settings
                 } label: {
-                    TagChip(text: L.t("缺少 API Key，点此配置", "No API key — click to set up"), color: .orange)
+                    TagChip(text: L.t("No API key — click to set up", "缺少 API Key，点此配置"), color: .orange)
                 }
                 .buttonStyle(.plain)
             }
         } else {
-            TagChip(text: L.t("离线 · 免费", "Offline · Free"), color: .blue)
+            TagChip(text: L.t("Offline · Free", "离线 · 免费"), color: .blue)
         }
     }
 
@@ -200,7 +200,7 @@ private struct SpeakContent: View {
                 } else {
                     Image(systemName: "waveform.badge.plus")
                 }
-                Text(isGenerating ? L.t("生成中…", "Generating…") : L.t("生成语音", "Generate"))
+                Text(isGenerating ? L.t("Generating…", "生成中…") : L.t("Generate", "生成语音"))
                     .fontWeight(.medium)
             }
             .frame(minWidth: 110)
@@ -219,10 +219,10 @@ private struct SpeakContent: View {
                 let item = try await TTSEngine.generate(text: input, providerID: providerID,
                                                         speed: speed, into: store.speechDir)
                 store.addSpeech(item)
-                showToast(L.t("已生成并保存（\(Format.mmss(item.duration))）", "Generated & saved (\(Format.mmss(item.duration)))"))
+                showToast(L.t("Generated & saved (\(Format.mmss(item.duration)))", "已生成并保存（\(Format.mmss(item.duration))）"))
                 if autoSpeak { play(item) }
             } catch {
-                state.errorMessage = L.t("语音生成失败：", "Speech generation failed: ") + error.localizedDescription
+                state.errorMessage = L.t("Speech generation failed: ", "语音生成失败：") + error.localizedDescription
             }
         }
     }
@@ -233,7 +233,7 @@ private struct SpeakContent: View {
         Card {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label(L.t("生成记录", "Generated audio"), systemImage: "music.note.list")
+                    Label(L.t("Generated audio", "生成记录"), systemImage: "music.note.list")
                         .font(.headline)
                     Spacer()
                     if !store.speechItems.isEmpty {
@@ -243,12 +243,12 @@ private struct SpeakContent: View {
                             Image(systemName: "folder")
                         }
                         .buttonStyle(.borderless)
-                        .help(L.t("在访达中显示全部音频", "Reveal all audio in Finder"))
+                        .help(L.t("Reveal all audio in Finder", "在访达中显示全部音频"))
                     }
                 }
 
                 if store.speechItems.isEmpty {
-                    Text(L.t("生成的语音会保存在这里，随时重听或导出。", "Generated audio is saved here for replay or export."))
+                    Text(L.t("Generated audio is saved here for replay or export.", "生成的语音会保存在这里，随时重听或导出。"))
                         .captionStyle()
                         .padding(.vertical, 10)
                 } else {
@@ -299,12 +299,12 @@ private struct SpeakContent: View {
             Button {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(item.text, forType: .string)
-                showToast(L.t("文本已复制", "Text copied"))
+                showToast(L.t("Text copied", "文本已复制"))
             } label: {
                 Image(systemName: "doc.on.doc")
             }
             .buttonStyle(.borderless)
-            .help(L.t("复制原文", "Copy text"))
+            .help(L.t("Copy text", "复制原文"))
 
             Button {
                 exportSpeech(item)
@@ -312,7 +312,7 @@ private struct SpeakContent: View {
                 Image(systemName: "square.and.arrow.up")
             }
             .buttonStyle(.borderless)
-            .help(L.t("导出音频", "Export audio"))
+            .help(L.t("Export audio", "导出音频"))
 
             Button {
                 if playingItemID == item.id { stopPlayback() }
@@ -345,9 +345,9 @@ private struct SpeakContent: View {
         try? FileManager.default.removeItem(at: dest)
         do {
             try FileManager.default.copyItem(at: store.speechURL(for: item), to: dest)
-            showToast(L.t("已导出", "Exported"))
+            showToast(L.t("Exported", "已导出"))
         } catch {
-            state.errorMessage = L.t("导出失败：", "Export failed: ") + error.localizedDescription
+            state.errorMessage = L.t("Export failed: ", "导出失败：") + error.localizedDescription
         }
     }
 

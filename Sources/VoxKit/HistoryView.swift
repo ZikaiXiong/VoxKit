@@ -30,7 +30,7 @@ private struct HistoryContent: View {
             VStack(spacing: 0) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                    TextField(L.t("搜索标题或内容", "Search titles or content"), text: $search)
+                    TextField(L.t("Search titles or content", "搜索标题或内容"), text: $search)
                         .textFieldStyle(.plain)
                     if !search.isEmpty {
                         Button { search = "" } label: {
@@ -40,7 +40,7 @@ private struct HistoryContent: View {
                     }
                     if state.importingCount > 0 {
                         ProgressView().controlSize(.small)
-                            .help(L.t("正在导入音频…", "Importing audio…"))
+                            .help(L.t("Importing audio…", "正在导入音频…"))
                     }
                     Button {
                         importAudio()
@@ -48,7 +48,7 @@ private struct HistoryContent: View {
                         Image(systemName: "square.and.arrow.down")
                     }
                     .buttonStyle(.borderless)
-                    .help(L.t("导入音频文件转写（也可以直接拖进窗口）", "Import audio files (or just drop them on the window)"))
+                    .help(L.t("Import audio files (or just drop them on the window)", "导入音频文件转写（也可以直接拖进窗口）"))
                 }
                 .padding(10)
 
@@ -62,7 +62,7 @@ private struct HistoryContent: View {
                                     store.delete(session)
                                     if state.selectedSessionID == session.id { state.selectedSessionID = nil }
                                 } label: {
-                                    Label(L.t("删除", "Delete"), systemImage: "trash")
+                                    Label(L.t("Delete", "删除"), systemImage: "trash")
                                 }
                             }
                     }
@@ -85,8 +85,8 @@ private struct HistoryContent: View {
                             .font(.system(size: 42))
                             .foregroundStyle(.quaternary)
                         Text(store.sessions.isEmpty
-                             ? L.t("还没有录音，去「听写」页开始吧", "No recordings yet — start from the Dictate page")
-                             : L.t("选择左侧一条记录查看详情", "Select a recording on the left"))
+                             ? L.t("No recordings yet — start from the Dictate page", "还没有录音，去「听写」页开始吧")
+                             : L.t("Select a recording on the left", "选择左侧一条记录查看详情"))
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -100,8 +100,8 @@ private struct HistoryContent: View {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.wav, .mp3, .mpeg4Audio, .aiff, UTType(filenameExtension: "flac") ?? .audio]
         panel.allowsMultipleSelection = true
-        panel.message = L.t("选择要转写的音频文件（自动转换格式并加入资料库）",
-                            "Choose audio files to transcribe (converted and added to the library)")
+        panel.message = L.t("Choose audio files to transcribe (converted and added to the library)",
+                            "选择要转写的音频文件（自动转换格式并加入资料库）")
         guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
         state.importAudioFiles(panel.urls)
     }
@@ -132,8 +132,8 @@ private struct SessionRow: View {
             HStack(spacing: 6) {
                 TagChip(text: session.mode.label, color: session.mode == .quick ? .blue : .purple)
                 if let v = session.current {
-                    TagChip(text: v.model == "on-device" ? L.t("本机", "On-device") : v.model)
-                    if v.hasCorrection { TagChip(text: L.t("已修正", "Corrected"), color: .green) }
+                    TagChip(text: v.model == "on-device" ? L.t("On-device", "本机") : v.model)
+                    if v.hasCorrection { TagChip(text: L.t("Corrected", "已修正"), color: .green) }
                 }
                 Spacer()
                 Text("\(Format.shortDate(session.date)) · \(Format.mmss(session.duration))")

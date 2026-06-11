@@ -32,11 +32,11 @@ private struct MenuBarContent: View {
             if state.phase == .recording || state.phase == .paused {
                 HStack(spacing: 8) {
                     if state.activeMode == .meeting {
-                        Button(state.phase == .paused ? L.t("继续", "Resume") : L.t("暂停", "Pause")) {
+                        Button(state.phase == .paused ? L.t("Resume", "继续") : L.t("Pause", "暂停")) {
                             state.pauseOrResume()
                         }
                     }
-                    Button(L.t("取消", "Cancel"), role: .destructive) { state.cancelRecording() }
+                    Button(L.t("Cancel", "取消"), role: .destructive) { state.cancelRecording() }
                     Spacer()
                     Text(Format.mmss(recorder.elapsed))
                         .font(.callout.monospacedDigit())
@@ -48,7 +48,7 @@ private struct MenuBarContent: View {
             if !store.sessions.isEmpty {
                 Divider()
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L.t("最近", "Recent")).font(.caption).foregroundStyle(.secondary)
+                    Text(L.t("Recent", "最近")).font(.caption).foregroundStyle(.secondary)
                     ForEach(store.sessions.prefix(3)) { session in
                         Button {
                             state.selectedPage = .history
@@ -80,7 +80,7 @@ private struct MenuBarContent: View {
             Divider()
 
             HStack {
-                Button(L.t("打开主窗口", "Open Main Window")) { openMain() }
+                Button(L.t("Open Main Window", "打开主窗口")) { openMain() }
                 Spacer()
                 Button {
                     state.selectedPage = .settings
@@ -95,7 +95,7 @@ private struct MenuBarContent: View {
                     Image(systemName: "power")
                 }
                 .buttonStyle(.borderless)
-                .help(L.t("退出声记", "Quit VoxKit"))
+                .help(L.t("Quit VoxKit", "退出声记"))
             }
             .controlSize(.small)
         }
@@ -107,16 +107,16 @@ private struct MenuBarContent: View {
     private var statusText: some View {
         switch state.phase {
         case .recording:
-            TagChip(text: L.t("录音中", "Recording") + " " + Format.mmss(recorder.elapsed), color: .red)
+            TagChip(text: L.t("Recording", "录音中") + " " + Format.mmss(recorder.elapsed), color: .red)
         case .paused:
-            TagChip(text: L.t("已暂停", "Paused"), color: .orange)
+            TagChip(text: L.t("Paused", "已暂停"), color: .orange)
         case .processing:
-            TagChip(text: state.processingDetail ?? L.t("转写中", "Working"), color: .indigo)
+            TagChip(text: state.processingDetail ?? L.t("Working", "转写中"), color: .indigo)
         default:
             if service.isBusy {
-                TagChip(text: L.t("后台转写中", "Transcribing"), color: .indigo)
+                TagChip(text: L.t("Transcribing", "后台转写中"), color: .indigo)
             } else {
-                TagChip(text: L.t("待命", "Ready") + " " + HotkeyPreset.current().label, color: .secondary)
+                TagChip(text: L.t("Ready", "待命") + " " + HotkeyPreset.current().label, color: .secondary)
             }
         }
     }
@@ -128,8 +128,8 @@ private struct MenuBarContent: View {
             HStack {
                 Image(systemName: state.phase == .recording && state.activeMode == .quick ? "checkmark.circle.fill" : "mic.fill")
                 Text(state.phase == .recording && state.activeMode == .quick
-                     ? L.t("完成并复制", "Finish & Copy")
-                     : L.t("开始快速听写", "Start Quick Dictation"))
+                     ? L.t("Finish & Copy", "完成并复制")
+                     : L.t("Start Quick Dictation", "开始快速听写"))
                     .fontWeight(.medium)
             }
             .frame(maxWidth: .infinity)

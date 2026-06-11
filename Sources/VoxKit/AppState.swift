@@ -7,11 +7,11 @@ enum MainPage: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .record: return L.t("听写", "Dictate")
-        case .speak: return L.t("朗读", "Speak")
-        case .history: return L.t("历史", "History")
-        case .lexicon: return L.t("词典", "Lexicon")
-        case .settings: return L.t("设置", "Settings")
+        case .record: return L.t("Dictate", "听写")
+        case .speak: return L.t("Speak", "朗读")
+        case .history: return L.t("History", "历史")
+        case .lexicon: return L.t("Lexicon", "词典")
+        case .settings: return L.t("Settings", "设置")
         }
     }
     var icon: String {
@@ -115,9 +115,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
                 self.liveText = ""
                 self.phase = .idle
                 HUDController.shared.hide()
-                self.errorMessage = L.t(
-                    "麦克风没有送出音频（可能被其他应用占用或设备未就绪），自动重试后仍失败。请再按一次快捷键重试，或在「听写」页换一个麦克风。",
-                    "The microphone delivered no audio (it may be busy or not ready) even after automatic retries. Press the hotkey again, or pick another mic on the Dictate page.")
+                self.errorMessage = L.t("The microphone delivered no audio (it may be busy or not ready) even after automatic retries. Press the hotkey again, or pick another mic on the Dictate page.",
+                    "麦克风没有送出音频（可能被其他应用占用或设备未就绪），自动重试后仍失败。请再按一次快捷键重试，或在「听写」页换一个麦克风。")
             }
         }
         restoreModel()
@@ -217,8 +216,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
             if activeMode == .quick {
                 Task { await stopAndFinish() }
             } else {
-                errorMessage = L.t("正在进行会议录音，请先在主窗口结束。",
-                                   "A meeting recording is in progress. Stop it from the main window first.")
+                errorMessage = L.t("A meeting recording is in progress. Stop it from the main window first.",
+                                   "正在进行会议录音，请先在主窗口结束。")
             }
         case .processing:
             break
@@ -230,15 +229,15 @@ final class AppState: ObservableObject, @unchecked Sendable {
         // A lingering review panel from the previous dictation closes silently
         if reviewTarget != nil { finishReview(editedText: nil) }
         guard await AudioRecorder.ensurePermission() else {
-            errorMessage = L.t("未获得麦克风权限：请在「系统设置 → 隐私与安全性 → 麦克风」中允许「声记」。",
-                               "Microphone access denied: allow VoxKit under System Settings → Privacy & Security → Microphone.")
+            errorMessage = L.t("Microphone access denied: allow VoxKit under System Settings → Privacy & Security → Microphone.",
+                               "未获得麦克风权限：请在「系统设置 → 隐私与安全性 → 麦克风」中允许「声记」。")
             return
         }
         // Snapshot the mode's own provider/model — the picker may change mid-recording
         let provider = provider(for: mode)
         if provider.needsKey && !Keychain.has(account: provider.id) {
-            errorMessage = L.t("\(provider.displayName) 还没有配置 API Key，请到「设置」中填写，或切换到「本机识别」。",
-                               "\(provider.displayName) has no API key yet. Add one in Settings, or switch to On-Device.")
+            errorMessage = L.t("\(provider.displayName) has no API key yet. Add one in Settings, or switch to On-Device.",
+                               "\(provider.displayName) 还没有配置 API Key，请到「设置」中填写，或切换到「本机识别」。")
             selectedPage = .settings
             return
         }
@@ -267,7 +266,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
             try recorder.start(to: url, device: device)
         } catch {
             live.cancel()
-            errorMessage = L.t("录音启动失败：", "Failed to start recording: ") + error.localizedDescription
+            errorMessage = L.t("Failed to start recording: ", "录音启动失败：") + error.localizedDescription
             return
         }
 
@@ -313,8 +312,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
             usingLive = false
             try? FileManager.default.removeItem(at: recorder.fileURL ?? URL(fileURLWithPath: "/dev/null"))
             finishQuickHUD(micWasLive
-                           ? L.t("录音太短，已取消", "Too short, cancelled")
-                           : L.t("麦克风尚未就绪，请再试一次", "Mic wasn't ready yet — try again"),
+                           ? L.t("Too short, cancelled", "录音太短，已取消")
+                           : L.t("Mic wasn't ready yet — try again", "麦克风尚未就绪，请再试一次"),
                            success: false)
             return
         }
@@ -339,17 +338,17 @@ final class AppState: ObservableObject, @unchecked Sendable {
                         let (fixed, n) = Learner.applyActiveRules(store.lexicon.rules, to: trimmed)
                         if n > 0, fixed != trimmed {
                             version.correctedText = fixed
-                            version.note = L.t("自动修正 \(n) 处", "Auto-fixed \(n) spots")
+                            version.note = L.t("Auto-fixed \(n) spots", "自动修正 \(n) 处")
                         }
                     }
                     // Optional: AI grammar correction (with glossary)
                     if AICorrector.autoEnabled && AICorrector.isConfigured {
-                        processingDetail = L.t("AI 修正中…", "AI correcting…")
+                        processingDetail = L.t("AI correcting…", "AI 修正中…")
                         if let outcome = try? await AICorrector.correct(
                             text: version.displayText, language: version.language, lexicon: store.lexicon),
                            outcome.hasChange {
                             version.correctedText = outcome.text
-                            let tag = L.t("AI 修正", "AI corrected")
+                            let tag = L.t("AI corrected", "AI 修正")
                             version.note = version.note.map { $0 + "；" + tag } ?? tag
                         }
                         processingDetail = nil
@@ -367,7 +366,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
                 if let version {
                     deliverQuickResult(version.displayText, sessionID: session.id, transcriptID: version.id)
                 } else {
-                    finishQuickHUD(L.t("转写失败，录音已保存到历史", "Failed — audio saved to History"), success: false)
+                    finishQuickHUD(L.t("Failed — audio saved to History", "转写失败，录音已保存到历史"), success: false)
                 }
             }
         } else {
@@ -383,8 +382,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
     func retranscribe(session: Session, providerID: String, model: String) {
         let p = Providers.by(providerID)
         if p.needsKey && !Keychain.has(account: p.id) {
-            errorMessage = L.t("\(p.displayName) 还没有配置 API Key，请到「设置」中填写。",
-                               "\(p.displayName) has no API key yet. Add one in Settings.")
+            errorMessage = L.t("\(p.displayName) has no API key yet. Add one in Settings.",
+                               "\(p.displayName) 还没有配置 API Key，请到「设置」中填写。")
             return
         }
         let lang = LanguageChoice(rawValue: session.language) ?? .auto
@@ -397,8 +396,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
         Task {
             for url in urls {
                 guard supported.contains(url.pathExtension.lowercased()) else {
-                    errorMessage = L.t("不支持的格式：\(url.lastPathComponent)（支持 wav / mp3 / m4a / aac / flac / aiff / caf）",
-                                       "Unsupported format: \(url.lastPathComponent) (wav / mp3 / m4a / aac / flac / aiff / caf)")
+                    errorMessage = L.t("Unsupported format: \(url.lastPathComponent) (wav / mp3 / m4a / aac / flac / aiff / caf)",
+                                       "不支持的格式：\(url.lastPathComponent)（支持 wav / mp3 / m4a / aac / flac / aiff / caf）")
                     continue
                 }
                 importingCount += 1
@@ -408,7 +407,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
                     selectedPage = .history
                     selectedSessionID = session.id
                 } catch {
-                    errorMessage = L.t("导入失败：", "Import failed: ") + error.localizedDescription
+                    errorMessage = L.t("Import failed: ", "导入失败：") + error.localizedDescription
                 }
             }
         }
@@ -417,8 +416,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
     /// Manually triggers AI correction (button on the detail page)
     func aiCorrect(sessionID: UUID, transcriptID: UUID) {
         guard AICorrector.isConfigured else {
-            errorMessage = L.t("AI 修正还没有配置，请到「设置 → AI 修正」选择模型。",
-                               "AI correction is not configured. See Settings → AI Correction.")
+            errorMessage = L.t("AI correction is not configured. See Settings → AI Correction.",
+                               "AI 修正还没有配置，请到「设置 → AI 修正」选择模型。")
             selectedPage = .settings
             return
         }
@@ -426,15 +425,15 @@ final class AppState: ObservableObject, @unchecked Sendable {
         Task {
             guard let session = store.session(sessionID),
                   let version = session.transcripts.first(where: { $0.id == transcriptID }) else { return }
-            service.progress[sessionID] = .init(done: 1, total: 1, label: L.t("AI 修正中…", "AI correcting…"))
+            service.progress[sessionID] = .init(done: 1, total: 1, label: L.t("AI correcting…", "AI 修正中…"))
             defer { service.progress[sessionID] = nil }
             do {
                 let outcome = try await AICorrector.correct(
                     text: version.displayText, language: version.language, lexicon: store.lexicon)
                 if outcome.hasChange {
-                    var tag = L.t("AI 修正", "AI corrected")
+                    var tag = L.t("AI corrected", "AI 修正")
                     if outcome.skippedChunks > 0 {
-                        tag += L.t("（\(outcome.skippedChunks) 段跳过）", " (\(outcome.skippedChunks) chunk(s) skipped)")
+                        tag += L.t(" (\(outcome.skippedChunks) chunk(s) skipped)", "（\(outcome.skippedChunks) 段跳过）")
                     }
                     let finalTag = tag
                     store.updateTranscript(sessionID: sessionID, transcriptID: transcriptID) {
@@ -442,13 +441,13 @@ final class AppState: ObservableObject, @unchecked Sendable {
                         $0.note = $0.note.map { n in n.contains(finalTag) ? n : n + "；" + finalTag } ?? finalTag
                     }
                 } else if outcome.skippedChunks > 0 {
-                    errorMessage = L.t("AI 修正结果与原文偏离过大或被安全护栏拦截，已保留原文。可重试或在设置中换一个修正模型。",
-                                       "The AI output drifted too far from the original or was blocked by guardrails; the original text was kept. Retry, or switch the correction model in Settings.")
+                    errorMessage = L.t("The AI output drifted too far from the original or was blocked by guardrails; the original text was kept. Retry, or switch the correction model in Settings.",
+                                       "AI 修正结果与原文偏离过大或被安全护栏拦截，已保留原文。可重试或在设置中换一个修正模型。")
                 } else {
-                    errorMessage = L.t("AI 检查完毕，没有发现需要修正的地方。", "AI found nothing to fix.")
+                    errorMessage = L.t("AI found nothing to fix.", "AI 检查完毕，没有发现需要修正的地方。")
                 }
             } catch {
-                errorMessage = L.t("AI 修正失败：", "AI correction failed: ") + error.localizedDescription
+                errorMessage = L.t("AI correction failed: ", "AI 修正失败：") + error.localizedDescription
             }
         }
     }
@@ -460,8 +459,8 @@ final class AppState: ObservableObject, @unchecked Sendable {
         guard !final.isEmpty else {
             // Distinguish "no speech" from "no signal at all" — the latter usually means the wrong mic
             let message = recorder.peakLevel < 0.03
-                ? L.t("没有收到声音，请检查「麦克风」选择", "No sound received — check the Microphone selection")
-                : L.t("未识别到内容", "Nothing recognized")
+                ? L.t("No sound received — check the Microphone selection", "没有收到声音，请检查「麦克风」选择")
+                : L.t("Nothing recognized", "未识别到内容")
             finishQuickHUD(message, success: false)
             return
         }
@@ -481,7 +480,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
             reviewTarget = ReviewTarget(sessionID: sessionID, transcriptID: transcriptID, originalDisplay: final)
             ReviewPanelController.shared.show()
         } else {
-            finishQuickHUD(L.t("已复制（\(final.count) 字）", "Copied (\(final.count) chars)"), success: true)
+            finishQuickHUD(L.t("Copied (\(final.count) chars)", "已复制（\(final.count) 字）"), success: true)
         }
     }
 
