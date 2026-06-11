@@ -5,23 +5,23 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>VoxNote</string>
+	<string>VoxKit</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.zikai.voxnote</string>
+	<string>com.zikai.voxkit</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>VoxNote</string>
+	<string>VoxKit</string>
 	<key>CFBundleDisplayName</key>
-	<string>VoxNote</string>
+	<string>VoxKit</string>
 	<key>LSHasLocalizedDisplayName</key>
 	<true/>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.6.0</string>
+	<string>0.6.0</string>
 	<key>CFBundleVersion</key>
-	<string>10</string>
+	<string>11</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>LSMinimumSystemVersion</key>
@@ -33,9 +33,9 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>VoxNote needs the microphone to record and transcribe speech.</string>
+	<string>VoxKit needs the microphone to record and transcribe speech.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>VoxNote uses the system speech recognizer for on-device transcription.</string>
+	<string>VoxKit uses the system speech recognizer for on-device transcription.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 zikai</string>
 </dict>

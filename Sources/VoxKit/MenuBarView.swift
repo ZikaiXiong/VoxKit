@@ -95,7 +95,7 @@ private struct MenuBarContent: View {
                     Image(systemName: "power")
                 }
                 .buttonStyle(.borderless)
-                .help(L.t("退出声记", "Quit VoxNote"))
+                .help(L.t("退出声记", "Quit VoxKit"))
             }
             .controlSize(.small)
         }

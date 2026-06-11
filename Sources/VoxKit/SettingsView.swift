@@ -211,6 +211,11 @@ struct SettingsView: View {
             LabeledContent(L.t("开发者", "Developer")) {
                 Text("Zikai Xiong")
             }
+            LabeledContent(L.t("开发方式", "Built with")) {
+                Text("Claude Fable 5 · Vibe Coding")
+                    .foregroundStyle(LinearGradient.vox)
+                    .fontWeight(.medium)
+            }
             LabeledContent(L.t("主页", "Homepage")) {
                 Button {
                     if let url = URL(string: "https://zikaixiong.github.io") {
@@ -228,7 +233,7 @@ struct SettingsView: View {
     }
 
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.6.0"
     }
 }
 

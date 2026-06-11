@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build and package VoxNote.app
+# Build and package VoxKit.app
 # Compiles with swiftc directly (this machine's CLT has a broken SwiftPM manifest library; switch back to swift build once full Xcode is installed)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -10,15 +10,15 @@ mkdir -p .build
 
 swiftc -O -parse-as-library -swift-version 5 \
   -target "${ARCH}-apple-macos13.0" \
-  -module-name VoxNote \
-  Sources/VoxNote/*.swift \
-  -o .build/VoxNote
+  -module-name VoxKit \
+  Sources/VoxKit/*.swift \
+  -o .build/VoxKit
 
-APP="dist/VoxNote.app"
+APP="dist/VoxKit.app"
 rm -rf dist
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-cp .build/VoxNote "$APP/Contents/MacOS/VoxNote"
+cp .build/VoxKit "$APP/Contents/MacOS/VoxKit"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 if [ -f Resources/AppIcon.icns ]; then
   cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
@@ -43,7 +43,7 @@ echo "   首次运行：open \"$PWD/$APP\"（系统会请求麦克风/语音识�
 # --zip: build the distribution archive (see DISTRIBUTION.md)
 if [[ "${1:-}" == "--zip" ]]; then
   VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Resources/Info.plist)
-  ZIP="dist/VoxNote-${VERSION}.zip"
+  ZIP="dist/VoxKit-${VERSION}.zip"
   ditto -c -k --keepParent "$APP" "$ZIP"
   echo "📦 分发包：$PWD/$ZIP"
 fi

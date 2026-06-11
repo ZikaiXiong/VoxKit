@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "VoxNote",
+    name: "VoxKit",
     platforms: [.macOS(.v13)],
     targets: [
         .executableTarget(
-            name: "VoxNote",
-            path: "Sources/VoxNote"
+            name: "VoxKit",
+            path: "Sources/VoxKit"
         )
     ],
     swiftLanguageVersions: [.v5]

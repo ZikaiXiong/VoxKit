@@ -47,7 +47,7 @@ enum AudioChunker {
 
         // 3. Write out the chunk files
         let tmpDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("voxnote-chunks-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("voxkit-chunks-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
 
         var chunks: [AudioChunk] = []
