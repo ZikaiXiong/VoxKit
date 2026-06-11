@@ -1,115 +1,138 @@
-# VoxKit 声记
+# VoxKit
 
-A macOS menu-bar speech-to-text app: quick dictation + meeting transcription, multiple
-transcription models, AI proofreading, and a lexicon that learns your corrections.
+> A lightweight macOS menu-bar app for speech-to-text and text-to-speech — press a
+> hotkey anywhere, talk, and the transcript lands on your clipboard.
+
+![Platform](https://img.shields.io/badge/macOS-13%2B-blue)
+![Swift](https://img.shields.io/badge/Swift-5-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+VoxKit lives in your menu bar and stays out of the way. It is a small, native SwiftUI
+app (~5 MB, no Electron, no background daemons) built by
+[Zikai Xiong](https://zikaixiong.github.io) with Claude (Fable 5).
 Interface in English, 简体中文, Español, Français, and 日本語.
-By [Zikai Xiong](https://zikaixiong.github.io), built with Claude (Fable 5).
-Currently in 0.x — expect rough edges.
+Currently 0.x — it works well, but expect rough edges.
 
 ## Features
 
-- **Lives in the menu bar** — closing the main window tucks it into the top-right corner;
-  a global hotkey (default `⌥ Space`) starts dictation from anywhere
-- **Two modes**
-  - *Quick Dictation*: a lightweight floating bar (like an input method); the result is
-    copied to your clipboard the moment you stop, with optional auto-paste
-  - *Meeting*: long-form recording with pause/resume; transcribes in the background and
-    presents the result with timestamps
-- **Multiple engines**: Apple on-device recognition (free/offline), OpenAI, Groq,
-  SiliconFlow, AssemblyAI, or any OpenAI-compatible endpoint — Chinese and English alike
-- **Speaker diarization**: choose AssemblyAI for meetings and get a transcript split by
-  speaker (`[02:15] Speaker A: …`); hours-long audio is handled natively without chunking
-- **Text-to-speech**: a dedicated Speak page turns text into audio — system voices
-  (free/offline), OpenAI / Groq / SiliconFlow TTS models, with voice & speed options;
-  generated audio is auto-saved and can optionally play right away
-- **Microphone picker**: choose your input source right on the record page; newly
-  plugged-in mics appear automatically, unplugged ones fall back to the system default
-- **Drag & drop import**: drop audio files (wav/mp3/m4a/aac/flac/aiff/caf) onto the
-  window — they're converted automatically and ready to transcribe with any model
-- **Keys in the Keychain**: API keys are stored in the macOS Keychain, never in plain text
-- **Long-audio auto-chunking**: recordings beyond a model's limits are split at quiet
-  points, transcribed chunk by chunk, and merged back with timestamps
-- **Recordings are never wasted**: everything is kept in a local library; re-run any
-  recording through a different model and compare versions side by side
-- **Self-learning lexicon + AI proofreading** — mis-recognitions vary wildly but the
-  right words are stable, so VoxKit learns *vocabulary*, not brittle replacement rules:
-  words you type while correcting a transcript become hotwords, and the transcript plus
-  that glossary goes to a language model for context-aware proofreading (replace only
-  where the original reads wrong). Apple Intelligence on-device or any OpenAI-compatible
-  chat model; automatic after every transcription or manual per session — the original
-  text is always preserved
-- **Hotword injection**: your glossary is passed as a prompt to transcription models that
-  support it, so proper nouns come out right at the source
+**Dictation, anywhere, with the model of your choice**
+- Press the global hotkey (default `⌥ Space`) in any app, speak, press it again —
+  the transcript is copied to your clipboard instantly, with optional auto-paste
+- A floating review panel (resizable, never steals focus) lets you touch the text up,
+  run a one-click AI proofread (`⌘J`), or just ignore it while you paste
+- Pick your engine per task: Apple's on-device recognition (free, offline, live
+  streaming text) or cloud models from OpenAI, Groq, SiliconFlow, AssemblyAI, and any
+  OpenAI-compatible endpoint
+- Quick Dictation and Meeting modes each remember their own service and model
 
-## Install (free path, no Apple Developer account)
+**Meeting transcription**
+- Long-form recording with pause/resume; transcription runs in the background
+- Speaker diarization via AssemblyAI (`[02:15] Speaker A: …`), with hours-long audio
+  handled in a single request
+- For chunk-limited models, long recordings are split automatically at quiet points
+  and merged back with timestamps
+- Every recording is kept in a local library — re-transcribe with a different model
+  any time, compare versions side by side, drag in external audio files
+  (wav/mp3/m4a/aac/flac/aiff/caf) to transcribe them too
 
-1. Download `VoxKit-x.y.z.zip` from [Releases](../../releases) and unzip it
-2. Drag `VoxKit.app` into your **Applications** folder
-3. First launch — the app is not notarized, so macOS will block the first double-click:
-   - **macOS 15 (Sequoia) and later**: double-click once (it gets blocked), then open
-     **System Settings → Privacy & Security**, scroll down and click **"Open Anyway"**
+**Text-to-speech**
+- A dedicated Speak page turns text into audio: system voices (free, offline,
+  exportable) or OpenAI / Groq / SiliconFlow TTS models, with voice and speed controls
+- Generated audio is saved automatically; replay, export, or speak it right away
+
+**A lexicon that learns your vocabulary**
+- Words you type while correcting transcripts become hotwords automatically; frequent
+  words are mined from your history as one-click candidates
+- Hotwords are injected into transcription prompts and AI proofreading, so names and
+  technical terms come out spelled right — corrections are contextual, never blind
+  find-and-replace
+
+**Keys in the Keychain, data on your disk**
+- API keys are stored in the **macOS Keychain** — never in files, never in logs
+- All recordings, transcripts, and the lexicon stay in
+  `~/Library/Application Support/VoxKit/`; no telemetry, no analytics, and no network
+  traffic except the model requests you explicitly trigger
+
+## Install
+
+### Option 1 — download the app (no tools required)
+
+1. Grab `VoxKit-<version>.zip` from [Releases](../../releases) and unzip it
+2. Drag `VoxKit.app` into **Applications**
+3. First launch: the app is not notarized (no Apple Developer subscription), so macOS
+   blocks the first double-click —
+   - **macOS 15+**: double-click once, then open *System Settings → Privacy & Security*,
+     scroll down, click **Open Anyway**
    - **macOS 14 and earlier**: right-click the app → **Open** → **Open**
-   - Or clear the quarantine flag in Terminal instead:
-     ```bash
-     xattr -cr /Applications/VoxKit.app
-     ```
-4. Grant **Microphone** and **Speech Recognition** permissions when prompted
-5. Optional: add API keys under *Settings → API Keys* for cloud models; on-device
-   recognition works out of the box with no key
+   - or clear the quarantine flag in Terminal: `xattr -cr /Applications/VoxKit.app`
 
-## Build from source
+### Option 2 — build from source
 
 ```bash
-git clone <this repo>
+git clone https://github.com/zikaixiong/VoxKit.git
 cd VoxKit
-./build.sh          # compile + package dist/VoxKit.app
-./build.sh --zip    # also produce a distributable zip
+./build.sh            # compiles and packages dist/VoxKit.app
 open dist/VoxKit.app
 ```
 
-Only Xcode Command Line Tools are required (the build uses `swiftc` directly — no
-full Xcode, no SwiftPM). See [DISTRIBUTION.md](DISTRIBUTION.md) for signing,
-notarization, and shipping to other people.
+Only the Xcode Command Line Tools are required — the build script drives `swiftc`
+directly, so there is no Xcode project and no package resolution step.
+`./build.sh --zip` additionally produces a distributable zip. Signing and
+notarization, if you have a Developer ID, are covered in
+[DISTRIBUTION.md](DISTRIBUTION.md).
 
-## Service limits (chunk length is adjustable in Settings)
+## Usage
 
-| Service | Models | Max upload | Default chunk |
+1. **Set up a model** (optional) — on-device recognition works with zero setup. For
+   cloud models, paste an API key under *Settings → API Keys*; check the ⓘ button next
+   to the model pickers for prices and recommendations per scenario
+2. **Dictate** — press `⌥ Space` anywhere, speak, press again. Watch the level meter
+   bounce in the floating bar; the text is copied the moment recognition finishes
+3. **Record a meeting** — switch to Meeting mode on the Dictate page; pause/resume as
+   needed. The transcript appears in History with timestamps (and speakers, on
+   AssemblyAI)
+4. **Fix and teach** — edit any transcript in History (or in the post-dictation
+   panel) and save; the words you introduced join your lexicon and improve future
+   recognition
+5. **Speak** — paste text into the Speak page, pick a voice, generate
+
+## Permissions
+
+VoxKit asks only for what each feature needs:
+
+| Permission | When | Why |
+|---|---|---|
+| **Microphone** | first recording | capturing audio to transcribe |
+| **Speech Recognition** | first on-device transcription | Apple's system recognizer processes your audio (offline when the language supports it) |
+| **Accessibility** | only if you enable *auto-paste* | simulating `⌘V` into the frontmost app |
+
+API keys are written to your login Keychain under the service
+`com.zikai.voxkit` and are sent only as authorization headers to the service they
+belong to. Nothing else leaves your machine.
+
+## Supported services
+
+| Service | Transcription | TTS | Notes |
 |---|---|---|---|
-| Apple on-device | system recognizer | — | 10 min offline / 55 s server |
-| OpenAI | gpt-4o(-mini)-transcribe, whisper-1 | 25 MB | 10 min |
-| Groq | whisper-large-v3(-turbo) | 25 MB | 10 min |
-| SiliconFlow | SenseVoiceSmall | 25 MB | 5 min |
-| AssemblyAI | universal-3-pro (+ diarization) | ~2 GB | no chunking needed |
+| Apple (on-device) | ✓ live + file | ✓ system voices | free, offline, no key |
+| OpenAI | ✓ | ✓ | gpt-4o(-mini)-transcribe, whisper-1, gpt-4o-mini-tts |
+| Groq | ✓ | ✓ | whisper-large-v3(-turbo) — fastest cloud option |
+| SiliconFlow | ✓ | ✓ | SenseVoice, CosyVoice2 — strong Chinese support |
+| AssemblyAI | ✓ | — | speaker diarization, hours-long audio, no chunking |
+| Custom | ✓ | ✓ | any OpenAI-compatible endpoint |
 
-Recordings are stored as 16 kHz mono WAV (~1.9 MB/min), so a 10-minute chunk stays
-far below the 25 MB caps.
-
-## Privacy & data location
-
-Everything stays on your Mac:
-
-- Recordings, transcripts, the lexicon, and generated speech live in
-  `~/Library/Application Support/VoxKit/` — `sessions.json` (history), `lexicon.json`
-  (your vocabulary), `Audio/` (recordings), `Speech/` (generated TTS audio)
-- API keys are stored in the **macOS Keychain**, never in files
-- No telemetry, no analytics, no network calls other than the transcription/TTS
-  requests you explicitly trigger
-
-Because all personal data lives outside both the app bundle and this repository,
-**distributing the built `.app` or publishing this source code never carries your
-recordings, lexicon, or keys**. Deleting the folder above wipes everything.
+AI proofreading additionally works with Apple Intelligence on-device (macOS 26+) or
+any of the chat-capable services above.
 
 ## Requirements
 
-- macOS 13+ (Apple Silicon build; see DISTRIBUTION.md for universal binaries)
-- "AI Correction → Apple Intelligence" needs macOS 26+ with Apple Intelligence enabled;
-  everything else works without it
+- macOS 13 Ventura or later, Apple Silicon
+  (Intel: build from source with the `lipo` notes in DISTRIBUTION.md)
 
-## Roadmap
+## Contributing
 
-- System-audio capture (the other side of a meeting) — currently records the microphone
-- Speaker identification (mapping Speaker A/B to real names) and automatic summaries
-- Silence auto-stop (VAD)
+Issues and pull requests are welcome. The codebase is a single Swift module under
+`Sources/VoxKit/` — `build.sh` is the whole build system.
 
 ## License
 
