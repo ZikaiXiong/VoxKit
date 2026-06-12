@@ -13,15 +13,28 @@ struct AudioChunk {
 enum AudioChunker {
     private static let probe: Double = 0.2   // RMS sampling window (seconds)
 
-    static func prepareChunks(source: URL, maxChunkSeconds: Double) throws -> [AudioChunk] {
+    static func prepareChunks(source: URL, maxChunkSeconds: Double, boostQuiet: Bool = false) throws -> [AudioChunk] {
         let src = try AVAudioFile(forReading: source)
         let sr = src.processingFormat.sampleRate
         guard sr > 0, src.length > 0 else { throw VoxError.message(L.t("Audio file is unreadable or empty", "音频文件无法读取或为空")) }
         let total = Double(src.length) / sr
 
-        // Short enough: use the original file as-is
+        // Quiet-audio boost: scan the peak once and amplify low-level recordings so
+        // soft/breathy speech reaches the model with usable dynamic range.
+        let gain = boostQuiet ? quietBoostGain(of: src) : 1.0
+
+        // Short enough: one chunk. Without boost reuse the original file; with boost
+        // write an amplified temporary copy.
         if total <= maxChunkSeconds * 1.15 {
-            return [AudioChunk(url: source, start: 0, duration: total, isTemporary: false)]
+            if gain <= 1.01 {
+                return [AudioChunk(url: source, start: 0, duration: total, isTemporary: false)]
+            }
+            let tmpDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("voxkit-chunks-\(UUID().uuidString)", isDirectory: true)
+            try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
+            let url = tmpDir.appendingPathComponent("boosted.wav")
+            try writeSegment(of: src, from: 0, to: total, into: url, gain: gain)
+            return [AudioChunk(url: url, start: 0, duration: total, isTemporary: true)]
         }
 
         // 1. Scan the loudness profile of the whole file
@@ -55,7 +68,7 @@ enum AudioChunker {
             let s = cuts[k], e = cuts[k + 1]
             guard e - s > 0.3 else { continue }
             let url = tmpDir.appendingPathComponent(String(format: "chunk-%03d.wav", k))
-            try writeSegment(of: src, from: s, to: e, into: url)
+            try writeSegment(of: src, from: s, to: e, into: url, gain: gain)
             chunks.append(AudioChunk(url: url, start: s, duration: e - s, isTemporary: true))
         }
         guard !chunks.isEmpty else { throw VoxError.message(L.t("Audio splitting failed", "音频切割失败")) }
@@ -81,6 +94,34 @@ enum AudioChunker {
     }
 
     // MARK: - Internals
+
+    /// Gain that lifts a quiet recording toward -1 dBFS. Returns 1.0 (no change)
+    /// for recordings that are already loud enough, and is capped so near-silent
+    /// noise floors aren't blown up into garbage.
+    private static func quietBoostGain(of file: AVAudioFile) -> Float {
+        let peak = peakAmplitude(of: file)
+        guard peak > 0.0008 else { return 1.0 }   // essentially silent — don't amplify noise
+        guard peak < 0.5 else { return 1.0 }       // already loud enough
+        let target: Float = 0.89                    // ~ -1 dBFS
+        return min(16, target / peak)               // cap at ~24 dB
+    }
+
+    private static func peakAmplitude(of file: AVAudioFile) -> Float {
+        let block = AVAudioFrameCount(file.processingFormat.sampleRate * probe)
+        guard let buf = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: block) else { return 0 }
+        var peak: Float = 0
+        file.framePosition = 0
+        while file.framePosition < file.length {
+            buf.frameLength = 0
+            guard (try? file.read(into: buf, frameCount: block)) != nil, buf.frameLength > 0 else { break }
+            if let ch = buf.floatChannelData?[0] {
+                for i in 0..<Int(buf.frameLength) { peak = max(peak, abs(ch[i])) }
+            }
+        }
+        file.framePosition = 0
+        return peak
+    }
+
 
     private static func loudnessProfile(of file: AVAudioFile) throws -> [Float] {
         let sr = file.processingFormat.sampleRate
@@ -110,7 +151,7 @@ enum AudioChunker {
         return sqrtf(sum / Float(max(1, count)))
     }
 
-    private static func writeSegment(of src: AVAudioFile, from start: Double, to end: Double, into url: URL) throws {
+    private static func writeSegment(of src: AVAudioFile, from start: Double, to end: Double, into url: URL, gain: Float = 1.0) throws {
         let sr = src.processingFormat.sampleRate
         let outFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 16000, channels: 1, interleaved: true)!
         let settings: [String: Any] = [
@@ -152,6 +193,13 @@ enum AudioChunker {
                 return inBuf
             }
             if status == .error { throw convError ?? VoxError.message(L.t("Audio conversion failed", "音频转换失败")) }
+            if gain > 1.01, let samples = outBuf.int16ChannelData?[0] {
+                let n = Int(outBuf.frameLength)
+                for i in 0..<n {
+                    let amplified = Float(samples[i]) * gain
+                    samples[i] = Int16(max(-32768, min(32767, amplified)))
+                }
+            }
             if outBuf.frameLength > 0 { try outFile.write(from: outBuf) }
         }
     }

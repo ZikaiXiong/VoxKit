@@ -37,8 +37,9 @@ final class TranscriptionService: ObservableObject {
             }
 
             // 2. Split (file IO on a background thread)
+            let boostQuiet = (UserDefaults.standard.object(forKey: "boostQuiet") as? Bool) ?? true
             let chunks = try await Task.detached(priority: .userInitiated) {
-                try AudioChunker.prepareChunks(source: audioURL, maxChunkSeconds: chunkSeconds)
+                try AudioChunker.prepareChunks(source: audioURL, maxChunkSeconds: chunkSeconds, boostQuiet: boostQuiet)
             }.value
             progress[session.id] = Progress(done: 0, total: chunks.count)
 

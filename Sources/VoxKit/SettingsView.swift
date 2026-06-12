@@ -6,6 +6,7 @@ struct SettingsView: View {
     @EnvironmentObject var state: AppState
 
     @AppStorage("quickReview") private var quickReview = true
+    @AppStorage("boostQuiet") private var boostQuiet = true
     @AppStorage("autoPaste") private var autoPaste = false
     @AppStorage("apple.lang") private var appleLang = "zh"
     @AppStorage("apple.onDevice") private var appleOnDevice = true
@@ -89,6 +90,9 @@ struct SettingsView: View {
             Toggle(L.t("Show a review panel after dictation", "听写完成后弹出修正窗"), isOn: $quickReview)
                 .help(L.t("Text is copied first; the panel never steals focus, edits are re-copied and learned",
                           "结果仍会先复制；修正窗不抢焦点，改动会重新复制并让词典学习"))
+            Toggle(L.t("Boost quiet recordings before transcribing", "转写前增强弱音录音"), isOn: $boostQuiet)
+                .help(L.t("Automatically amplifies soft or breathy speech so the model can hear it; loud recordings are left unchanged",
+                          "自动放大小声/气声录音让模型听清；正常音量不受影响"))
             Toggle(L.t("Auto-paste after quick dictation", "快速听写复制后自动粘贴到当前输入框"), isOn: $autoPaste)
                 .onChange(of: autoPaste) { on in
                     if on && !Paster.trusted { Paster.requestTrust() }
