@@ -34,9 +34,16 @@ enum CloudTranscriber {
             body.appendUTF8("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n")
         }
         appendField("model", model)
-        appendField("response_format", "json")
+        // Diarizing models return speaker-labeled segments and require a chunking strategy
+        let diarized = model.contains("diarize")
+        if diarized {
+            appendField("response_format", "diarized_json")
+            appendField("chunking_strategy", "auto")
+        } else {
+            appendField("response_format", "json")
+        }
         if let language, !language.isEmpty { appendField("language", language) }
-        if let prompt, !prompt.isEmpty { appendField("prompt", prompt) }
+        if let prompt, !prompt.isEmpty, !diarized { appendField("prompt", prompt) }
 
         let ext = fileURL.pathExtension.lowercased()
         let mime: String
@@ -67,9 +74,21 @@ enum CloudTranscriber {
             }
             throw VoxError.message("\(provider.displayName) \(http.statusCode): \(String(message.prefix(300)))")
         }
-        if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let text = obj["text"] as? String {
-            return text
+        if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            // diarized_json: format segments as "[mm:ss] Speaker A: …" paragraphs
+            if diarized, let segments = obj["segments"] as? [[String: Any]], !segments.isEmpty {
+                let lines = segments.compactMap { segment -> String? in
+                    guard let text = (segment["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                          !text.isEmpty else { return nil }
+                    let speaker = (segment["speaker"] as? String) ?? "?"
+                    let start = (segment["start"] as? Double) ?? 0
+                    return "[\(Format.mmss(start))] \(L.t("Speaker", "说话人")) \(speaker)\(L.t(": ", "："))\(text)"
+                }
+                if !lines.isEmpty { return lines.joined(separator: "\n\n") }
+            }
+            if let text = obj["text"] as? String {
+                return text
+            }
         }
         if let text = String(data: data, encoding: .utf8), !text.isEmpty {
             return text   // some services return plain text directly

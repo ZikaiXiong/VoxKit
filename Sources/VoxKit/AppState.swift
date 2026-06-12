@@ -147,10 +147,20 @@ final class AppState: ObservableObject, @unchecked Sendable {
         Providers.by(Self.storedProvider(for: mode))
     }
 
-    func resolvedModel(forProvider pid: String) -> String {
+    func resolvedModel(forProvider pid: String, mode: TranscriptionMode? = nil) -> String {
         let models = ProviderConfig.models(Providers.by(pid))
-        let saved = UserDefaults.standard.string(forKey: "model.\(pid)")
-        if let saved, models.contains(saved) { return saved }
+        let effectiveMode = mode ?? uiMode
+        if let saved = UserDefaults.standard.string(forKey: "model.\(effectiveMode.rawValue).\(pid)"),
+           models.contains(saved) {
+            return saved
+        }
+        if let legacy = UserDefaults.standard.string(forKey: "model.\(pid)"), models.contains(legacy) {
+            return legacy
+        }
+        // Meetings on OpenAI default to the diarizing model (speaker labels)
+        if effectiveMode == .meeting, pid == "openai", models.contains("gpt-4o-transcribe-diarize") {
+            return "gpt-4o-transcribe-diarize"
+        }
         return models.first ?? ""
     }
 
@@ -162,7 +172,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
 
     func selectModel(_ m: String) {
         model = m
-        UserDefaults.standard.set(m, forKey: "model.\(providerID)")
+        UserDefaults.standard.set(m, forKey: "model.\(uiMode.rawValue).\(providerID)")
     }
 
     private func restoreModel() {
@@ -197,10 +207,10 @@ final class AppState: ObservableObject, @unchecked Sendable {
     func modelBinding(for mode: TranscriptionMode) -> Binding<String> {
         Binding(get: {
             let pid = Self.storedProvider(for: mode)
-            return self.resolvedModel(forProvider: pid)
+            return self.resolvedModel(forProvider: pid, mode: mode)
         }, set: { m in
             let pid = Self.storedProvider(for: mode)
-            UserDefaults.standard.set(m, forKey: "model.\(pid)")
+            UserDefaults.standard.set(m, forKey: "model.\(mode.rawValue).\(pid)")
             if mode == self.uiMode { self.model = m }
             self.objectWillChange.send()
         })
@@ -242,7 +252,7 @@ final class AppState: ObservableObject, @unchecked Sendable {
             return
         }
         activeProvider = provider
-        activeModel = resolvedModel(forProvider: provider.id)
+        activeModel = resolvedModel(forProvider: provider.id, mode: mode)
 
         let url = store.newAudioURL()
         liveText = ""

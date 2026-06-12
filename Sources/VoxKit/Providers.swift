@@ -28,7 +28,7 @@ enum Providers {
     static let openai = Provider(
         id: "openai", name: "OpenAI", needsKey: true,
         defaultBaseURL: "https://api.openai.com/v1",
-        models: ["gpt-4o-mini-transcribe", "gpt-4o-transcribe", "whisper-1"],
+        models: ["gpt-4o-mini-transcribe", "gpt-4o-transcribe", "gpt-4o-transcribe-diarize", "whisper-1"],
         supportsPrompt: true, defaultChunkSeconds: 600, maxUploadMB: 25,
         icon: "sparkle", keyHint: "Get an API key at platform.openai.com. 25MB per file.")
 

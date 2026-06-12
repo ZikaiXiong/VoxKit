@@ -310,11 +310,11 @@ private struct ProviderKeyRow: View {
                     }
                 }
             }
-            if provider.id == "assemblyai" {
-                Toggle(L.t("Speaker diarization (outputs Speaker A/B, +$0.02/hr)",
-                           "说话人分离（输出「说话人 A / B」，+$0.02/小时）"), isOn: $diarize)
+            if provider.id == "assemblyai" || provider.id == "deepgram" {
+                Toggle(L.t("Speaker diarization (outputs Speaker A/B)",
+                           "说话人分离（输出「说话人 A / B」）"), isOn: $diarize)
                     .onChange(of: diarize) { v in
-                        UserDefaults.standard.set(v, forKey: "assemblyai.diarize")
+                        UserDefaults.standard.set(v, forKey: "\(provider.id).diarize")
                     }
             }
             DisclosureGroup(L.t("Advanced", "高级")) {
@@ -340,7 +340,7 @@ private struct ProviderKeyRow: View {
         .onAppear {
             saved = Keychain.has(account: provider.id)
             baseURL = UserDefaults.standard.string(forKey: "base.\(provider.id)") ?? ""
-            diarize = (UserDefaults.standard.object(forKey: "assemblyai.diarize") as? Bool) ?? true
+            diarize = (UserDefaults.standard.object(forKey: "\(provider.id).diarize") as? Bool) ?? (provider.id == "assemblyai")
         }
     }
 }

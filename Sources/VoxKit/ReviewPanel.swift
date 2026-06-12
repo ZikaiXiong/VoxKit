@@ -37,18 +37,12 @@ final class ReviewPanelController {
     }
 
     private func build() {
-        // A titled-but-chromeless panel: .borderless windows never get the system's
-        // edge-resize behavior, so use a real titled window and hide all its chrome.
+        // Borderless panel; resizing is handled by our own drag grip (system
+        // edge-resize is unreliable for non-activating utility panels).
         let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 560, height: 250),
-            styleMask: [.titled, .fullSizeContentView, .nonactivatingPanel, .resizable],
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered, defer: false)
-        panel.titleVisibility = .hidden
-        panel.titlebarAppearsTransparent = true
-        panel.standardWindowButton(.closeButton)?.isHidden = true
-        panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
-        panel.standardWindowButton(.zoomButton)?.isHidden = true
-        panel.contentMinSize = NSSize(width: 460, height: 210)
         panel.level = .statusBar
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -57,17 +51,24 @@ final class ReviewPanelController {
         panel.isMovableByWindowBackground = true
         panel.becomesKeyOnlyIfNeeded = true
         self.panel = panel
+    }
 
-        // Remember the user's size for the next dictation
-        NotificationCenter.default.addObserver(
-            forName: NSWindow.didEndLiveResizeNotification, object: panel, queue: .main
-        ) { note in
-            guard let window = note.object as? NSWindow else { return }
-            MainActor.assumeIsolated {
-                UserDefaults.standard.set(Double(window.frame.width), forKey: "review.width")
-                UserDefaults.standard.set(Double(window.frame.height), forKey: "review.height")
-            }
-        }
+    /// Live-resize driven by the SwiftUI grip; keeps the top-left corner anchored
+    func resize(to size: NSSize, anchoredAt startFrame: NSRect) {
+        guard let panel else { return }
+        let width = max(460, size.width)
+        let height = max(210, size.height)
+        panel.setFrame(NSRect(x: startFrame.origin.x,
+                              y: startFrame.maxY - height,
+                              width: width, height: height), display: true)
+    }
+
+    var currentFrame: NSRect? { panel?.frame }
+
+    func persistSize() {
+        guard let panel else { return }
+        UserDefaults.standard.set(Double(panel.frame.width), forKey: "review.width")
+        UserDefaults.standard.set(Double(panel.frame.height), forKey: "review.height")
     }
 
     private func position() {
@@ -100,6 +101,15 @@ struct ReviewView: View {
                 Spacer()
                 Text(L.t("\(editedText.count) chars", "\(editedText.count) 字"))
                     .font(.caption2).foregroundStyle(.tertiary)
+                Button {
+                    state.finishReview(editedText: nil)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+                .help(L.t("Close", "关闭"))
             }
 
             TextEditor(text: $editedText)
@@ -151,6 +161,11 @@ struct ReviewView: View {
                     .strokeBorder(.quaternary, lineWidth: 1))
         )
         .padding(8)
+        .overlay(alignment: .bottomTrailing) {
+            ResizeGrip()
+                .padding(.trailing, 14)
+                .padding(.bottom, 14)
+        }
         .onAppear { editedText = original }
         .onHover { hovering in if hovering { countdown = nil } }
         .onReceive(tick) { _ in
@@ -222,5 +237,42 @@ struct ReviewView: View {
                 aiStatus = error.localizedDescription
             }
         }
+    }
+}
+
+/// Classic diagonal-lines resize grip; drags resize the panel directly,
+/// independent of any system window-resize behavior.
+private struct ResizeGrip: View {
+    @State private var startFrame: NSRect?
+
+    var body: some View {
+        Path { path in
+            for i in 0..<3 {
+                let offset = CGFloat(4 + i * 4)
+                path.move(to: CGPoint(x: 14, y: offset))
+                path.addLine(to: CGPoint(x: offset, y: 14))
+            }
+        }
+        .stroke(Color.secondary.opacity(0.7), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+        .frame(width: 16, height: 16)
+        .contentShape(Rectangle().inset(by: -8))
+        .gesture(
+            DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                .onChanged { value in
+                    if startFrame == nil {
+                        startFrame = ReviewPanelController.shared.currentFrame
+                    }
+                    guard let frame = startFrame else { return }
+                    ReviewPanelController.shared.resize(
+                        to: NSSize(width: frame.width + value.translation.width,
+                                   height: frame.height + value.translation.height),
+                        anchoredAt: frame)
+                }
+                .onEnded { _ in
+                    startFrame = nil
+                    ReviewPanelController.shared.persistSize()
+                }
+        )
+        .help(L.t("Drag to resize", "拖动调整大小"))
     }
 }
