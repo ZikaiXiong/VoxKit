@@ -135,40 +135,49 @@ private struct SpeakContent: View {
                 }
             }
             .frame(maxWidth: 300)
-        } else if providerID == "openai" {
-            Picker(L.t("Voice", "音色"), selection: voiceBinding) {
-                ForEach(TTSEngine.openAIVoices, id: \.self) { Text($0).tag($0) }
-            }
-            .fixedSize()
-        } else {
+        } else if providerID == "custom" {
             HStack(spacing: 6) {
                 Text(L.t("Voice", "音色")).foregroundStyle(.secondary)
-                TextField(TTSEngine.defaultVoice(providerID), text: voiceBinding)
+                TextField(L.t("voice name", "音色名"), text: voiceBinding)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 220)
+                    .frame(width: 180)
             }
+        } else {
+            Picker(L.t("Voice", "音色"), selection: voiceBinding) {
+                ForEach(TTSEngine.voices(providerID)) { v in
+                    Text(v.label).tag(v.id)
+                }
+            }
+            .fixedSize()
         }
     }
 
     @ViewBuilder
     private var modelControl: some View {
-        if providerID != TTSEngine.systemID {
+        if providerID == "custom" {
             HStack(spacing: 6) {
                 Text(L.t("Model", "模型")).foregroundStyle(.secondary)
-                TextField(TTSEngine.defaultModel(providerID), text: modelBinding)
+                TextField(L.t("model name", "模型名"), text: modelBinding)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 200)
             }
+        } else if providerID != TTSEngine.systemID {
+            Picker(L.t("Model", "模型"), selection: modelBinding) {
+                ForEach(TTSEngine.models(providerID), id: \.self) { Text($0).tag($0) }
+            }
+            .fixedSize()
         }
     }
 
     private var voiceBinding: Binding<String> {
-        Binding(get: { UserDefaults.standard.string(forKey: "tts.voice.\(providerID)") ?? TTSEngine.defaultVoice(providerID) },
+        Binding(get: { providerID == TTSEngine.systemID
+                        ? (UserDefaults.standard.string(forKey: "tts.voice.\(providerID)") ?? "")
+                        : TTSEngine.voice(for: providerID) },
                 set: { UserDefaults.standard.set($0, forKey: "tts.voice.\(providerID)") })
     }
 
     private var modelBinding: Binding<String> {
-        Binding(get: { UserDefaults.standard.string(forKey: "tts.model.\(providerID)") ?? "" },
+        Binding(get: { TTSEngine.model(for: providerID) },
                 set: { UserDefaults.standard.set($0, forKey: "tts.model.\(providerID)") })
     }
 

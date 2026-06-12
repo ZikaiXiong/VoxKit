@@ -35,7 +35,7 @@ enum Providers {
     static let groq = Provider(
         id: "groq", name: "Groq", needsKey: true,
         defaultBaseURL: "https://api.groq.com/openai/v1",
-        models: ["whisper-large-v3-turbo", "whisper-large-v3"],
+        models: ["whisper-large-v3-turbo", "whisper-large-v3", "distil-whisper-large-v3-en"],
         supportsPrompt: true, defaultChunkSeconds: 600, maxUploadMB: 25,
         icon: "bolt.horizontal.fill", keyHint: "Get an API key at console.groq.com. Fast, free tier available.")
 
@@ -45,6 +45,29 @@ enum Providers {
         models: ["FunAudioLLM/SenseVoiceSmall"],
         supportsPrompt: false, defaultChunkSeconds: 300, maxUploadMB: 25,
         icon: "cloud.fill", keyHint: "Get an API key at siliconflow.cn. Great for Chinese.")
+
+    static let zhipu = Provider(
+        id: "zhipu", name: "Zhipu GLM", needsKey: true,
+        defaultBaseURL: "https://open.bigmodel.cn/api/paas/v4",
+        models: ["glm-asr-2512", "glm-asr"],
+        supportsPrompt: false, defaultChunkSeconds: 55, maxUploadMB: 25,
+        icon: "brain.fill", keyHint: "Zhipu BigModel key — strong Chinese recognition.")
+
+    // Raw-body REST API (POST audio bytes to /v1/listen)
+    static let deepgram = Provider(
+        id: "deepgram", name: "Deepgram", needsKey: true,
+        defaultBaseURL: "https://api.deepgram.com",
+        models: ["nova-3", "nova-2"],
+        supportsPrompt: false, defaultChunkSeconds: 1200, maxUploadMB: 200,
+        icon: "waveform.badge.magnifyingglass", keyHint: "Deepgram key — top English accuracy, very fast.")
+
+    // Own multipart API with an xi-api-key header
+    static let elevenlabs = Provider(
+        id: "elevenlabs", name: "ElevenLabs", needsKey: true,
+        defaultBaseURL: "https://api.elevenlabs.io",
+        models: ["scribe_v2", "scribe_v1"],
+        supportsPrompt: false, defaultChunkSeconds: 3600, maxUploadMB: 500,
+        icon: "ear.fill", keyHint: "ElevenLabs key — multilingual Scribe transcription and premium voices.")
 
     // Async REST API (upload → create → poll); handles hours-long audio natively, so no chunking
     static let assemblyai = Provider(
@@ -62,8 +85,8 @@ enum Providers {
         supportsPrompt: true, defaultChunkSeconds: 600, maxUploadMB: 25,
         icon: "wrench.and.screwdriver.fill", keyHint: "Any OpenAI-compatible /audio/transcriptions service.")
 
-    static let all: [Provider] = [appleLocal, openai, groq, siliconflow, assemblyai, custom]
-    static let cloud: [Provider] = [openai, groq, siliconflow, assemblyai, custom]
+    static let all: [Provider] = [appleLocal, openai, groq, deepgram, elevenlabs, assemblyai, siliconflow, zhipu, custom]
+    static let cloud: [Provider] = [openai, groq, deepgram, elevenlabs, assemblyai, siliconflow, zhipu, custom]
 
     static func by(_ id: String) -> Provider {
         all.first { $0.id == id } ?? appleLocal

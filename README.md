@@ -119,8 +119,11 @@ belong to. Nothing else leaves your machine.
 | Apple (on-device) | ✓ live + file | ✓ system voices | free, offline, no key |
 | OpenAI | ✓ | ✓ | gpt-4o(-mini)-transcribe, whisper-1, gpt-4o-mini-tts |
 | Groq | ✓ | ✓ | whisper-large-v3(-turbo) — fastest cloud option |
-| SiliconFlow | ✓ | ✓ | SenseVoice, CosyVoice2 — strong Chinese support |
+| Deepgram | ✓ | — | nova-3 / nova-2 — top English accuracy |
+| ElevenLabs | ✓ | ✓ | Scribe transcription + premium voices |
 | AssemblyAI | ✓ | — | speaker diarization, hours-long audio, no chunking |
+| SiliconFlow | ✓ | ✓ | SenseVoice, CosyVoice2 — strong Chinese support |
+| Zhipu GLM | ✓ | — | GLM-ASR — strong Chinese recognition |
 | Custom | ✓ | ✓ | any OpenAI-compatible endpoint |
 
 AI proofreading additionally works with Apple Intelligence on-device (macOS 26+) or

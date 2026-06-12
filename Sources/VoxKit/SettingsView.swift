@@ -141,8 +141,8 @@ struct SettingsView: View {
     // MARK: AI correction
 
     private var aiSection: some View {
-        Section(L.t("AI Correction", "AI 修正")) {
-            Picker(L.t("Correction Model", "修正模型"), selection: $aiProvider) {
+        Section(L.t("AI Cleanup", "AI 清理润色")) {
+            Picker(L.t("Cleanup Model", "清理模型"), selection: $aiProvider) {
                 Text(L.t("Apple Intelligence (on-device, free)", "Apple 智能（本机，免费）")).tag(AICorrector.appleID)
                 ForEach(Providers.cloud) { p in
                     Text(p.displayName).tag(p.id)
@@ -166,7 +166,7 @@ struct SettingsView: View {
                 }
             }
 
-            Toggle(L.t("Auto-correct after every transcription", "转写完成后自动进行 AI 修正"), isOn: $aiAuto)
+            Toggle(L.t("Clean up automatically after every transcription", "转写完成后自动清理润色"), isOn: $aiAuto)
                 .help(L.t("Proofreads with your glossary; the original is always kept. Also available per-session in History",
                           "模型会带着你的词库校对，原文始终保留；也可在历史详情页手动触发"))
             Text(lexiconSummary)

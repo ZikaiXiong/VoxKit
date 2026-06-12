@@ -6,7 +6,13 @@ import AVFoundation
 /// shared with transcription via the Keychain.
 enum TTSEngine {
     static let systemID = "system"
-    static let providerIDs = [systemID, "openai", "groq", "siliconflow", "custom"]
+    static let providerIDs = [systemID, "openai", "elevenlabs", "groq", "siliconflow", "custom"]
+
+    /// A selectable voice: `id` is the API value, `label` what the picker shows
+    struct Voice: Identifiable, Hashable {
+        let id: String
+        let label: String
+    }
 
     /// Cloud endpoints reject very long inputs (OpenAI caps at 4096 chars)
     static let maxInputLength = 4000
@@ -17,33 +23,60 @@ enum TTSEngine {
 
     static func needsKey(_ id: String) -> Bool { id != systemID }
 
-    static func defaultModel(_ id: String) -> String {
+    /// Selectable models per provider — pickers everywhere, no typing
+    static func models(_ id: String) -> [String] {
         switch id {
-        case "openai": return "gpt-4o-mini-tts"
-        case "groq": return "playai-tts"
-        case "siliconflow": return "FunAudioLLM/CosyVoice2-0.5B"
-        default: return ""
+        case "openai": return ["gpt-4o-mini-tts", "tts-1", "tts-1-hd"]
+        case "elevenlabs": return ["eleven_multilingual_v2", "eleven_turbo_v2_5", "eleven_v3"]
+        case "groq": return ["playai-tts"]
+        case "siliconflow": return ["FunAudioLLM/CosyVoice2-0.5B", "fishaudio/fish-speech-1.5"]
+        default: return []
         }
     }
 
-    static func defaultVoice(_ id: String) -> String {
+    /// Selectable voices per provider
+    static func voices(_ id: String) -> [Voice] {
         switch id {
-        case "openai": return "alloy"
-        case "groq": return "Fritz-PlayAI"
-        case "siliconflow": return "FunAudioLLM/CosyVoice2-0.5B:anna"
-        default: return ""
+        case "openai":
+            return ["alloy", "ash", "ballad", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer"]
+                .map { Voice(id: $0, label: $0) }
+        case "elevenlabs":
+            // Stable premade voice IDs from the public ElevenLabs voice library
+            return [
+                Voice(id: "21m00Tcm4TlvDq8ikWAM", label: "Rachel"),
+                Voice(id: "EXAVITQu4vr4xnSDxMaL", label: "Sarah"),
+                Voice(id: "JBFqnCBsd6RMkjVDRZzb", label: "George"),
+                Voice(id: "pNInz6obpgDQGcFmaJgB", label: "Adam"),
+                Voice(id: "IKne3meq5aSn9XLyUdCD", label: "Charlie"),
+                Voice(id: "pFZP5JQG7iQjIQuC4Bku", label: "Lily"),
+            ]
+        case "groq":
+            return ["Fritz-PlayAI", "Arista-PlayAI", "Atlas-PlayAI", "Celeste-PlayAI", "Quinn-PlayAI", "Thunder-PlayAI"]
+                .map { Voice(id: $0, label: $0.replacingOccurrences(of: "-PlayAI", with: "")) }
+        case "siliconflow":
+            // Voice names; the request prepends the selected model ("model:name")
+            return ["anna", "bella", "benjamin", "charles", "claire", "david", "diana"]
+                .map { Voice(id: $0, label: $0) }
+        default:
+            return []
         }
     }
 
-    static let openAIVoices = ["alloy", "ash", "ballad", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer"]
+    static func defaultModel(_ id: String) -> String { models(id).first ?? "" }
+
+    static func defaultVoice(_ id: String) -> String { voices(id).first?.id ?? "" }
 
     static func model(for id: String) -> String {
         let stored = UserDefaults.standard.string(forKey: "tts.model.\(id)") ?? ""
+        if id != "custom", !models(id).isEmpty, !models(id).contains(stored) { return defaultModel(id) }
         return stored.isEmpty ? defaultModel(id) : stored
     }
 
     static func voice(for id: String) -> String {
         let stored = UserDefaults.standard.string(forKey: "tts.voice.\(id)") ?? ""
+        if id != "custom", id != systemID, !voices(id).isEmpty, !voices(id).contains(where: { $0.id == stored }) {
+            return defaultVoice(id)
+        }
         return stored.isEmpty ? defaultVoice(id) : stored
     }
 
@@ -87,8 +120,14 @@ enum TTSEngine {
             }
         }
 
+        let voiceLabel: String
+        if providerID == systemID {
+            voiceLabel = systemVoiceName(voice)
+        } else {
+            voiceLabel = voices(providerID).first(where: { $0.id == voice })?.label ?? voice
+        }
         return SpeechItem(text: trimmed, providerID: providerID, model: model,
-                          voice: providerID == systemID ? systemVoiceName(voice) : voice,
+                          voice: voiceLabel,
                           fileName: fileName, duration: duration)
     }
 
@@ -147,6 +186,9 @@ enum TTSEngine {
 
     private static func synthesizeCloud(text: String, providerID: String, model: String,
                                         voice: String, speed: Double) async throws -> Data {
+        if providerID == "elevenlabs" {
+            return try await ElevenLabsClient.synthesize(text: text, voiceID: voice, model: model)
+        }
         let provider = Providers.by(providerID)
         let base = ProviderConfig.baseURL(provider).trimmingCharacters(in: .whitespaces)
         guard !base.isEmpty,
@@ -166,10 +208,12 @@ enum TTSEngine {
         request.timeoutInterval = 300
         request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        // SiliconFlow expects "model:voiceName"
+        let voiceValue = providerID == "siliconflow" ? "\(model):\(voice)" : voice
         var payload: [String: Any] = [
             "model": model,
             "input": text,
-            "voice": voice,
+            "voice": voiceValue,
             "response_format": "mp3",
         ]
         if abs(speed - 1.0) > 0.01 { payload["speed"] = speed }

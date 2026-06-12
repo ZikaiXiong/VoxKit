@@ -178,7 +178,7 @@ struct ReviewView: View {
                 } else {
                     Image(systemName: "wand.and.stars")
                 }
-                Text(L.t("AI Fix", "AI 修正"))
+                Text(L.t("Clean Up", "清理润色"))
             }
         }
         .disabled(aiRunning || editedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

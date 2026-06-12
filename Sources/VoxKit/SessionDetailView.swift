@@ -143,7 +143,7 @@ private struct DetailContent: View {
         Button {
             state.aiCorrect(sessionID: session.id, transcriptID: version.id)
         } label: {
-            Label(L.t("AI Fix", "AI 修正"), systemImage: "wand.and.stars")
+            Label(L.t("Clean Up", "清理润色"), systemImage: "wand.and.stars")
         }
         .help(AICorrector.isConfigured
               ? L.t("Proofread with \(AICorrector.configuredLabel) using your glossary", "用 \(AICorrector.configuredLabel) 带词库整体校对")

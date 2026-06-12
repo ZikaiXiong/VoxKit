@@ -49,6 +49,9 @@ extension Provider {
         case "groq": return "Groq"
         case "siliconflow": return L.t("SiliconFlow", "硅基流动 SiliconFlow")
         case "assemblyai": return "AssemblyAI"
+        case "deepgram": return "Deepgram"
+        case "elevenlabs": return "ElevenLabs"
+        case "zhipu": return L.t("Zhipu GLM", "智谱 GLM")
         case "custom": return L.t("Custom (OpenAI-compatible)", "自定义（OpenAI 兼容）")
         default: return name
         }
@@ -71,6 +74,15 @@ extension Provider {
         case "assemblyai":
             return L.t("Get a key at assemblyai.com. Meeting-grade: long audio, speaker diarization.",
                        "在 assemblyai.com 获取 Key。会议级：长音频免分段，输出说话人分离稿。")
+        case "deepgram":
+            return L.t("Get a key at console.deepgram.com. Top English accuracy, very fast; $200 free credit.",
+                       "在 console.deepgram.com 获取 Key。英文准确率顶级、速度快，注册送 $200 额度。")
+        case "elevenlabs":
+            return L.t("Get a key at elevenlabs.io. Multilingual Scribe transcription + premium TTS voices.",
+                       "在 elevenlabs.io 获取 Key。Scribe 多语转写 + 顶级 TTS 音色。")
+        case "zhipu":
+            return L.t("Get a key at open.bigmodel.cn. Strong Chinese recognition (GLM-ASR).",
+                       "在 open.bigmodel.cn 获取 Key。GLM-ASR 中文识别强。")
         case "custom":
             return L.t("Any OpenAI-compatible /audio/transcriptions service. Set URL & models under Advanced.",
                        "任何 OpenAI 兼容的 /audio/transcriptions 服务，在「高级」里填地址和模型名。")

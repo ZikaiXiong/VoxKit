@@ -72,6 +72,12 @@ final class TranscriptionService: ObservableObject {
                     do {
                         if provider.id == "apple" {
                             text = try await AppleSpeech.transcribeFile(url: chunk.url, language: appleLang, preferOnDevice: preferOnDevice)
+                        } else if provider.id == "deepgram" {
+                            text = try await DeepgramTranscriber.transcribe(fileURL: chunk.url, provider: provider,
+                                                                            model: model, language: language.apiCode)
+                        } else if provider.id == "elevenlabs" {
+                            text = try await ElevenLabsClient.transcribe(fileURL: chunk.url, model: model,
+                                                                         language: language.apiCode)
                         } else if provider.id == "assemblyai" {
                             let diarize = (UserDefaults.standard.object(forKey: "assemblyai.diarize") as? Bool) ?? true
                             text = try await AssemblyAITranscriber.transcribe(fileURL: chunk.url, provider: provider, model: model,
