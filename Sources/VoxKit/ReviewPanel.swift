@@ -37,10 +37,17 @@ final class ReviewPanelController {
     }
 
     private func build() {
+        // A titled-but-chromeless panel: .borderless windows never get the system's
+        // edge-resize behavior, so use a real titled window and hide all its chrome.
         let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 560, height: 250),
-            styleMask: [.borderless, .nonactivatingPanel, .resizable],
+            styleMask: [.titled, .fullSizeContentView, .nonactivatingPanel, .resizable],
             backing: .buffered, defer: false)
+        panel.titleVisibility = .hidden
+        panel.titlebarAppearsTransparent = true
+        panel.standardWindowButton(.closeButton)?.isHidden = true
+        panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        panel.standardWindowButton(.zoomButton)?.isHidden = true
         panel.contentMinSize = NSSize(width: 460, height: 210)
         panel.level = .statusBar
         panel.isOpaque = false
