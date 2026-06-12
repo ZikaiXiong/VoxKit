@@ -7,6 +7,7 @@ struct SettingsView: View {
 
     @AppStorage("quickReview") private var quickReview = true
     @AppStorage("boostQuiet") private var boostQuiet = true
+    @AppStorage("review.autoCloseSeconds") private var reviewAutoClose = 12
     @AppStorage("autoPaste") private var autoPaste = false
     @AppStorage("apple.lang") private var appleLang = "zh"
     @AppStorage("apple.onDevice") private var appleOnDevice = true
@@ -90,6 +91,21 @@ struct SettingsView: View {
             Toggle(L.t("Show a review panel after dictation", "听写完成后弹出修正窗"), isOn: $quickReview)
                 .help(L.t("Text is copied first; the panel never steals focus, edits are re-copied and learned",
                           "结果仍会先复制；修正窗不抢焦点，改动会重新复制并让词典学习"))
+            if quickReview {
+                Stepper(value: $reviewAutoClose, in: 0...120, step: 1) {
+                    HStack {
+                        Text(L.t("　└ Auto-close after", "　└ 自动关闭时间"))
+                        Spacer()
+                        Text(reviewAutoClose == 0
+                             ? L.t("Never", "从不")
+                             : L.t("\(reviewAutoClose) s", "\(reviewAutoClose) 秒"))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                }
+                .help(L.t("How long the untouched panel stays before fading; any interaction cancels the timer",
+                          "无操作时弹窗停留多久后自动消失；一旦交互即取消倒计时"))
+            }
             Toggle(L.t("Boost quiet recordings before transcribing", "转写前增强弱音录音"), isOn: $boostQuiet)
                 .help(L.t("Automatically amplifies soft or breathy speech so the model can hear it; loud recordings are left unchanged",
                           "自动放大小声/气声录音让模型听清；正常音量不受影响"))

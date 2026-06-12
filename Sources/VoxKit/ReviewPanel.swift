@@ -83,7 +83,7 @@ final class ReviewPanelController {
 struct ReviewView: View {
     @EnvironmentObject var state: AppState
     @State private var editedText = ""
-    @State private var countdown: Int? = 12
+    @State private var countdown: Int?
     @State private var didSeedText = false
     @State private var aiRunning = false
     @State private var aiStatus: String?
@@ -166,7 +166,11 @@ struct ReviewView: View {
                 .padding(.trailing, 14)
                 .padding(.bottom, 14)
         }
-        .onAppear { editedText = original }
+        .onAppear {
+            editedText = original
+            let seconds = UserDefaults.standard.object(forKey: "review.autoCloseSeconds") as? Int ?? 12
+            countdown = seconds > 0 ? seconds : nil   // 0 = never auto-close
+        }
         .onHover { hovering in if hovering { countdown = nil } }
         .onReceive(tick) { _ in
             guard let c = countdown else { return }
